@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Http;
 
 class HttpApiService
 {
-    public function postRequest($url, $body, $file = null, $fileField = 'image')
+    public static function postRequest($url, $body, $file = null, $fileField = 'image')
     {
         try {
             // Initialize HTTP client
