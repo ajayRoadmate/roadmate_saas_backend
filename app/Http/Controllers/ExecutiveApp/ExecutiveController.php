@@ -76,8 +76,8 @@ class ExecutiveController extends Controller
             if ($isUserTokenSaved) {
 
                 $executive = DB::table('executives')
-                    ->leftjoin('distributers', 'executives.distributer_id', '=', 'distributers.id')
-                    ->select('executives.id', 'executives.executive_name', 'distributers.id as distributer_id', 'distributers.distributer_name')
+                    ->leftjoin('distributors', 'executives.distributor_id', '=', 'distributors.id')
+                    ->select('executives.id', 'executives.executive_name', 'distributors.id as distributor_id', 'distributers.distributor_name')
                     ->where('executives.phone', $phoneNumber)
                     ->where('executives.executive_status', 1)
                     ->get();
