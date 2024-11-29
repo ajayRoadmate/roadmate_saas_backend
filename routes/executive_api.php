@@ -14,3 +14,10 @@ Route::middleware([ValidateExecutiveKey::class])->group(function () {
 Route::post('fetchDistributorShops', [ExecutiveController::class, 'fetchDistributorShops']);
 Route::post('searchShopByNumber', [ExecutiveController::class, 'searchShopByNumber']);
 Route::post('shopOnboarding', [ExecutiveController::class, 'shopOnboarding']);
+
+Route::get('testExecutives', [ExecutiveController::class, 'testExecutives']);
+
+
+
+
+
