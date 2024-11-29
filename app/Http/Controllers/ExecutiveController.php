@@ -9,12 +9,18 @@ use Illuminate\Support\Facades\DB;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use App\Services\HttpApiService;
-
 use Intervention\Image\Laravel\Facades\Image;
+
+
 class ExecutiveController extends Controller
 {
 
     protected $httpApiService;
+
+    public function testExecutives(Request $request){
+
+        return response("hello test executives");
+    }
 
     public function __construct(HttpApiService $httpApiService)
     {

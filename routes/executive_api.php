@@ -21,6 +21,7 @@ Route::post('fetchPlaces', [ExecutiveController::class, 'fetchPlaces']);
 Route::get('fecthShopServices', [ExecutiveController::class, 'fecthShopServices']);
 Route::post('shopOnboarding', [ExecutiveController::class, 'shopOnboarding']);
 
+Route::get('testExecutives', [ExecutiveController::class, 'testExecutives']);
 
 
 
