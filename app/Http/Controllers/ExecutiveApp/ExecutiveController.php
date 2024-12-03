@@ -191,8 +191,6 @@ class ExecutiveController extends Controller
         }
     }
 
-
-
     public function shopOnboarding(Request $request)
     {
 
@@ -236,5 +234,44 @@ class ExecutiveController extends Controller
         } else {
             return handleCustomError("Failed to onboard new shop.");
         }
+    }
+
+    public function fetchDistributorProducts(Request $request)
+    {
+        $request->validate([
+            "distributor_id" => "required|integer",
+            "index" => "required|integer|min:0",
+            "category_id" => "nullable|integer|min:1",
+            "sub_category_id" => "nullable|integer|min:1",
+            "brand_id" => "nullable|integer|min:1",
+            "search" => "nullable|string"
+        ]);
+        $distributorId = $request->distributor_id;
+        $categoryId = $request->category_id;
+        $subCategoryId = $request->sub_category_id;
+        $brandId = $request->brand_id;
+        $search = $request->search;
+        $index = $request->index;
+        $offset = ($index * 20);
+        $limit = 20;
+
+        $query = Task::initializeProductQuery($distributorId);
+        $query = Task::productQueryFilter($query, $categoryId, $subCategoryId, $brandId, $search);
+
+
+        $productArr = $query
+            ->offset($offset)
+            ->limit($limit)
+            ->get();
+
+        $products = [];
+        if ($productArr->isNotEmpty()) {
+            foreach ($productArr as $product) {
+
+                $product->images = Task::fetchProductImage($product->variant_id);
+                $products[] = $product;
+            }
+        }
+        return handleFetchResponse(collect($products));
     }
 }
