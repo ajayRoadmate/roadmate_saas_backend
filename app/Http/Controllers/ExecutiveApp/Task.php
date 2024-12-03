@@ -327,4 +327,78 @@ class Task
         }
         return true;
     }
+
+    public static function initializeProductQuery($distributorId)
+    {
+        $query = DB::table('products')
+            ->leftjoin('product_variants', 'products.id', '=', 'product_variants.product_id')
+            ->leftjoin('units', 'product_variants.unit_id', '=', 'units.id')
+            ->select(
+                'products.id as product_id',
+                'products.product_name',
+                'product_variants.id as variant_id',
+                'product_variants.variant_name',
+                'product_variants.variant_description',
+                'product_variants.unit_id',
+                'units.unit_name',
+                'product_variants.unit_quantity',
+                'units.unit_abbreviation',
+                'product_variants.color_variant_id',
+                'product_variants.stock_quantity',
+                'product_variants.purchase_price',
+                'product_variants.mrp',
+                'product_variants.b2b_selling_price'
+            )
+            ->where('products.distributor_id', $distributorId)
+            ->where('product_variants.b2b_status', 1)
+            ->where('product_variants.approve_status', 1);
+
+        return $query;
+    }
+
+    public static function productQueryFilter($query, $categoryId, $subCategoryId, $brandId, $search)
+    {
+        if (!empty($categoryId)) {
+
+            $query->where('products.category_id', $categoryId);
+        }
+        if (!empty($subCategoryId)) {
+
+            $query->where('products.sub_category_id', $subCategoryId);
+        }
+        if (!empty($brandId)) {
+
+            $query->where('products.brand_id', $brandId);
+        }
+
+        if (!empty($search)) {
+
+            $words_explode = explode(' ', $search);
+            $pattern = ".*";
+            for ($i = 0; $i < count($words_explode); $i++) {
+                $pattern = $pattern . $words_explode[$i] . ".*";
+            }
+
+            $query->where(function ($q) use ($pattern) {
+                $q->where('products.product_name', 'REGEXP', $pattern)
+                    ->orWhere('products.id', 'REGEXP', $pattern);
+            });
+        }
+
+        return $query;
+    }
+
+    public static function fetchProductImage($productVariantId)
+    {
+        $imageDetail = DB::table('product_images')
+            ->where('product_variant_id', $productVariantId)
+            ->where('product_image_status', 1)
+            ->first();
+
+        if ($imageDetail) {
+            return $imageDetail->image;
+        } else {
+            return "";
+        }
+    }
 }
