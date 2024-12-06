@@ -7,6 +7,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Illuminate\Http\Request;
 use App\Services\HttpApiService;
+use Carbon\Carbon;
 use Intervention\Image\Laravel\Facades\Image;
 
 class Task
@@ -399,6 +400,132 @@ class Task
             return $imageDetail->image;
         } else {
             return "";
+        }
+    }
+
+    public static function createB2BOrder(Request $request)
+    {
+
+        $newOrderRow = [
+            'shop_id' => $request->shop_id,
+            'order_date' => date('Y-m-d'),
+            'total_amount' => $request->total_amount,
+            'delivery_date' => $request->delivery_date,
+            'distributor_id' => $request->distributor_id,
+            'executive_id' => $request->executive_id,
+            'payment_status' => 0,
+            'payment_amount' => 0,
+            'b2b_order_status' => 1
+        ];
+
+        $newOrderId = DB::table('b2b_orders')->insertGetId($newOrderRow);
+
+        return $newOrderId;
+    }
+
+    public static function createB2BOrderDetails($request, $orderId)
+    {
+
+        $newOrderTxnRow = [];
+
+        foreach ($request->products as $product) {
+
+            $newOrderTxnRow[] = [
+                'order_master_id' => $orderId,
+                'product_id' => $product['product_id'],
+                'product_variant_id' => $product['product_variant_id'],
+                'purchase_price' => $product['purchase_price'],
+                'mrp' =>  $product['mrp'],
+                'selling_price' =>  $product['selling_price'],
+                'quantity' => $product['quantity'],
+                'b2b_order_details_status' =>  1
+            ];
+        }
+
+        DB::table('b2b_order_details')->insert($newOrderTxnRow);
+
+        return true;
+    }
+
+    public static function deleteCartItem($shopId)
+    {
+
+        DB::table('carts')
+            ->where('user_id', $shopId)
+            ->where('user_type', 1)
+            ->delete();
+
+        return true;
+    }
+    public  static function checkCartItemExists($request)
+    {
+        return DB::table('carts')
+            ->where('user_type', 1)
+            ->where('user_id', $request->shop_id)
+            ->where('product_id', $request->product_id)
+            ->where('product_variant_id', $request->product_variant_id)
+            ->first();
+    }
+
+    public  static function checkOrderExist($orderId)
+    {
+        return DB::table('b2b_orders')
+            ->where('id', $orderId)
+            ->exists();
+    }
+
+    public static function createB2BTransactions($request)
+    {
+
+        $orderId = $request->order_id;
+        $paymentMode = $request->payment_mode;
+        $transactionId =  $request->transaction_id;
+
+        if ($paymentMode == 0) {
+            $transactionId = "COD" . $orderId . time();
+        }
+
+        $newOrderRow = [
+            'order_id' => $orderId,
+            'shop_id' => $request->shop_id,
+            'transaction_id' => $transactionId,
+            'transaction_amount' => $request->amount,
+            'payment_mode' => $paymentMode,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+
+        ];
+        return  DB::table('b2b_transactions')->insertGetId($newOrderRow);
+    }
+
+    public static function updateB2BOrder($orderId, $amount)
+    {
+
+        $order = DB::table('b2b_orders')
+            ->where('id', $orderId)
+            ->first();
+        if ($order) {
+
+            $newPaymentAmount = $order->payment_amount + $amount;
+
+            if ($newPaymentAmount > $order->total_amount) return false;
+
+            $paymentStatus = $newPaymentAmount == $order->total_amount
+                ? 1 // Paid
+                : 2; // Partially Paid
+
+            $updatedRowCount = DB::table('b2b_orders')
+                ->where('id', $orderId)
+                ->update([
+                    'payment_amount' => $newPaymentAmount,
+                    'payment_status' => $paymentStatus,
+                    'updated_at' => Carbon::now(),
+                ]);
+
+            return $updatedRowCount > 0;
+        } else {
+
+            return false;
         }
     }
 }
