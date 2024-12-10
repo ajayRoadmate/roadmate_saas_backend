@@ -528,4 +528,11 @@ class Task
             return false;
         }
     }
+
+    public  static function checkShopNoteExist($shopNoteId)
+    {
+        return DB::table('shop_notes')
+            ->where('id', $shopNoteId)
+            ->exists();
+    }
 }

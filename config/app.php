@@ -147,8 +147,8 @@ return [
     ],
 
     'app_secret' => '3nRbfdxiiGx9zV0EZBUjd4VgQ7YK0bEsYWYq2Fv1gdU',
-    
-    'executive_keys' =>[
+
+    'executive_keys' => [
         'PRIMARY_KEY' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJyb2FkTWF0ZSIsImlhdCI6MTcxOTIyMzQ4Mywic3ViIjoidXNlcklkIn0.jZDoOVfUtN5344337RLKCKxfhLZu9uOxt6yxkCL8a3s'
     ],
 ];

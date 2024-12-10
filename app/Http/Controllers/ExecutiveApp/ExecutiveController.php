@@ -76,7 +76,7 @@ class ExecutiveController extends Controller
 
                 $executive = DB::table('executives')
                     ->leftjoin('distributors', 'executives.distributor_id', '=', 'distributors.id')
-                    ->select('executives.id', 'executives.executive_name', 'distributors.id as distributor_id', 'distributers.distributor_name')
+                    ->select('executives.id', 'executives.executive_name', 'distributors.id as distributor_id', 'distributors.distributor_name')
                     ->where('executives.phone', $phoneNumber)
                     ->where('executives.executive_status', 1)
                     ->get();
@@ -706,6 +706,90 @@ class ExecutiveController extends Controller
             DB::rollBack();
             Log::error("Payment Update Error: " . $e->getMessage(), ['request' => $request->all()]);
             return handleCustomError("An unexpected error occurred. Please try again.");
+        }
+    }
+
+    public function fetchShopNotes(Request $request)
+    {
+
+        $request->validate([
+            'shop_id' => 'required|integer',
+            'distributor_id' => 'required|integer',
+        ]);
+        $shopId = $request->shop_id;
+        $distributorId = $request->distributor_id;
+
+        $shopNoteArr = DB::table('shop_notes')
+            ->where('distributor_id', $distributorId)
+            ->where('shop_id', $shopId)
+            ->orderBy('id', 'desc')
+            ->get();
+
+        return handlefetchResponse($shopNoteArr);
+    }
+
+    public function createShopNote(Request $request)
+    {
+
+        $request->validate([
+            'shop_id' => 'required|integer|exists:shops,id',
+            'notes' => 'required',
+            'distributor_id' => 'required|integer',
+            'executive_id' => 'required|integer',
+
+        ]);
+
+        $newShopNotesRow = [
+            'shop_id' => $request->shop_id,
+            'note' => $request->notes,
+            'executive_id' => $request->executive_id,
+            'distributor_id' => $request->distributor_id,
+            'created_at' => Carbon::now(),
+            'updated_at' =>  Carbon::now(),
+        ];
+
+        $id = DB::table('shop_notes')->insertGetId($newShopNotesRow);
+
+        if ($id) {
+
+            return handleSuccess("Successfully added the shop's note.");
+        } else {
+
+            return handleCustomError("Failed to add the shop's note.");
+        }
+    }
+
+    public function updateShopNote(Request $request)
+    {
+        $request->validate([
+            'shop_note_id' => 'required|integer',
+            'note' => 'required',
+            'executive_id' => 'required|integer',
+        ]);
+        $shopNoteId = $request->shop_note_id;
+
+        $shopNoteExists = Task::checkShopNoteExist($shopNoteId);
+
+        if (!$shopNoteExists) {
+            return handleCustomError("Shop's note not found.");
+        }
+
+        $updateshopNotesField = [
+            'note' => $request->note,
+            'executive_id' => $request->executive_id,
+            'updated_at' => Carbon::now()
+        ];
+
+        $updatedRows = DB::table('shop_notes')
+            ->where('id', $shopNoteId)
+            ->update($updateshopNotesField);
+
+        if ($updatedRows > 0) {
+
+            return handleSuccess("Successfully updated the shop's note.");
+        } else {
+
+            return handleCustomError("Failed to update the shop's note.");
         }
     }
 }
