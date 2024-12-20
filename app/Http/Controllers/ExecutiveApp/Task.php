@@ -7,6 +7,7 @@ use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 use Illuminate\Http\Request;
 use App\Services\HttpApiService;
+use Carbon\Carbon;
 use Intervention\Image\Laravel\Facades\Image;
 
 class Task
@@ -326,5 +327,212 @@ class Task
             self::updateDeliveryIdonShops($shopId, $deliveryAddressId);
         }
         return true;
+    }
+
+    public static function initializeProductQuery($distributorId)
+    {
+        $query = DB::table('products')
+            ->leftjoin('product_variants', 'products.id', '=', 'product_variants.product_id')
+            ->leftjoin('units', 'product_variants.unit_id', '=', 'units.id')
+            ->select(
+                'products.id as product_id',
+                'products.product_name',
+                'product_variants.id as variant_id',
+                'product_variants.variant_name',
+                'product_variants.variant_description',
+                'product_variants.unit_id',
+                'units.unit_name',
+                'product_variants.unit_quantity',
+                'units.unit_abbreviation',
+                'product_variants.color_variant_id',
+                'product_variants.stock_quantity',
+                'product_variants.purchase_price',
+                'product_variants.mrp',
+                'product_variants.b2b_selling_price'
+            )
+            ->where('products.distributor_id', $distributorId)
+            ->where('product_variants.b2b_status', 1)
+            ->where('product_variants.approve_status', 1);
+
+        return $query;
+    }
+
+    public static function productQueryFilter($query, $categoryId, $subCategoryId, $brandId, $search)
+    {
+        if (!empty($categoryId)) {
+
+            $query->where('products.category_id', $categoryId);
+        }
+        if (!empty($subCategoryId)) {
+
+            $query->where('products.sub_category_id', $subCategoryId);
+        }
+        if (!empty($brandId)) {
+
+            $query->where('products.brand_id', $brandId);
+        }
+
+        if (!empty($search)) {
+
+            $words_explode = explode(' ', $search);
+            $pattern = ".*";
+            for ($i = 0; $i < count($words_explode); $i++) {
+                $pattern = $pattern . $words_explode[$i] . ".*";
+            }
+
+            $query->where(function ($q) use ($pattern) {
+                $q->where('products.product_name', 'REGEXP', $pattern)
+                    ->orWhere('products.id', 'REGEXP', $pattern);
+            });
+        }
+
+        return $query;
+    }
+
+    public static function fetchProductImage($productVariantId)
+    {
+        $imageDetail = DB::table('product_images')
+            ->where('product_variant_id', $productVariantId)
+            ->where('product_image_status', 1)
+            ->first();
+
+        if ($imageDetail) {
+            return $imageDetail->image;
+        } else {
+            return "";
+        }
+    }
+
+    public static function createB2BOrder(Request $request)
+    {
+
+        $newOrderRow = [
+            'shop_id' => $request->shop_id,
+            'order_date' => date('Y-m-d'),
+            'total_amount' => $request->total_amount,
+            'delivery_date' => $request->delivery_date,
+            'distributor_id' => $request->distributor_id,
+            'executive_id' => $request->executive_id,
+            'payment_status' => 0,
+            'payment_amount' => 0,
+            'b2b_order_status' => 1
+        ];
+
+        $newOrderId = DB::table('b2b_orders')->insertGetId($newOrderRow);
+
+        return $newOrderId;
+    }
+
+    public static function createB2BOrderDetails($request, $orderId)
+    {
+
+        $newOrderTxnRow = [];
+
+        foreach ($request->products as $product) {
+
+            $newOrderTxnRow[] = [
+                'order_master_id' => $orderId,
+                'product_id' => $product['product_id'],
+                'product_variant_id' => $product['product_variant_id'],
+                'purchase_price' => $product['purchase_price'],
+                'mrp' =>  $product['mrp'],
+                'selling_price' =>  $product['selling_price'],
+                'quantity' => $product['quantity'],
+                'b2b_order_details_status' =>  1
+            ];
+        }
+
+        DB::table('b2b_order_details')->insert($newOrderTxnRow);
+
+        return true;
+    }
+
+    public static function deleteCartItem($shopId)
+    {
+
+        DB::table('carts')
+            ->where('user_id', $shopId)
+            ->where('user_type', 1)
+            ->delete();
+
+        return true;
+    }
+    public  static function checkCartItemExists($request)
+    {
+        return DB::table('carts')
+            ->where('user_type', 1)
+            ->where('user_id', $request->shop_id)
+            ->where('product_id', $request->product_id)
+            ->where('product_variant_id', $request->product_variant_id)
+            ->first();
+    }
+
+    public  static function checkOrderExist($orderId)
+    {
+        return DB::table('b2b_orders')
+            ->where('id', $orderId)
+            ->exists();
+    }
+
+    public static function createB2BTransactions($request)
+    {
+
+        $orderId = $request->order_id;
+        $paymentMode = $request->payment_mode;
+        $transactionId =  $request->transaction_id;
+
+        if ($paymentMode == 0) {
+            $transactionId = "COD" . $orderId . time();
+        }
+
+        $newOrderRow = [
+            'order_id' => $orderId,
+            'shop_id' => $request->shop_id,
+            'transaction_id' => $transactionId,
+            'transaction_amount' => $request->amount,
+            'payment_mode' => $paymentMode,
+            'created_at' => Carbon::now(),
+            'updated_at' => Carbon::now(),
+
+        ];
+        return  DB::table('b2b_transactions')->insertGetId($newOrderRow);
+    }
+
+    public static function updateB2BOrder($orderId, $amount)
+    {
+
+        $order = DB::table('b2b_orders')
+            ->where('id', $orderId)
+            ->first();
+        if ($order) {
+
+            $newPaymentAmount = $order->payment_amount + $amount;
+
+            if ($newPaymentAmount > $order->total_amount) return false;
+
+            $paymentStatus = $newPaymentAmount == $order->total_amount
+                ? 1 // Paid
+                : 2; // Partially Paid
+
+            $updatedRowCount = DB::table('b2b_orders')
+                ->where('id', $orderId)
+                ->update([
+                    'payment_amount' => $newPaymentAmount,
+                    'payment_status' => $paymentStatus,
+                    'updated_at' => Carbon::now(),
+                ]);
+
+            return $updatedRowCount > 0;
+        } else {
+
+            return false;
+        }
+    }
+
+    public  static function checkShopNoteExist($shopNoteId)
+    {
+        return DB::table('shop_notes')
+            ->where('id', $shopNoteId)
+            ->exists();
     }
 }

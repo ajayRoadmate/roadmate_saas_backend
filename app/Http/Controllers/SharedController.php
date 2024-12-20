@@ -82,7 +82,7 @@ class SharedController extends Controller
         return handleFetchResponse($placeArr);
     }
 
-    public function fecthShopServices()
+    public function fetchShopServices()
     {
         $shopServiceArr = DB::table('services')
             ->select('id', 'service_name', 'image')
@@ -92,5 +92,41 @@ class SharedController extends Controller
             ->get();
 
         return handleFetchResponse($shopServiceArr);
+    }
+
+    public function fetchCategories()
+    {
+        $categoryArr = DB::table('categories')
+            ->select('id', 'category_name', 'image')
+            ->where('category_status', 1)
+            ->get();
+
+        return handleFetchResponse($categoryArr);
+    }
+    public function fetchSubCategories(Request $request)
+    {
+        $request->validate([
+            'category_id' => 'required|integer',
+        ]);
+
+        $categoryId = $request->category_id;
+
+        $subCatogoryArr = DB::table('sub_categories')
+            ->select('id', 'sub_category_name', 'image')
+            ->where('category_id', $categoryId)
+            ->where('sub_category_status', 1)
+            ->get();
+
+        return handleFetchResponse($subCatogoryArr);
+    }
+    public function fetchProductBrands()
+    {
+        $brandArr = DB::table('brands')
+            ->select('id', 'brand_name')
+            ->where('brand_status', 1)
+            ->orderBy('brand_name', 'ASC')
+            ->get();
+
+        return handleFetchResponse($brandArr);
     }
 }
