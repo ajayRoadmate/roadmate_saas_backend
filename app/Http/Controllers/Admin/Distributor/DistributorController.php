@@ -5,28 +5,15 @@ namespace App\Http\Controllers\Admin\Distributor;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller; 
 use Illuminate\Support\Facades\DB;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class DistributorController extends Controller
 {
 
     public function testFun(Request $request){
 
-        $newDistributorsRow = [
-            'distributor_name' => 'test distributor2',
-            'address' => 'test address2',
-            'phone' => 9098767899,
-            'email' => 'tes2t@email.com',
-            'place_id' => 1
-        ];
-
-        DB::table('distributors')
-        ->insert($newDistributorsRow);
-
-        $responseArr = [
-            'status' => 'success'
-        ];
-
-        return response()->json($responseArr);
+        return response("hello test function on push to server");
 
     }
 
@@ -61,18 +48,6 @@ class DistributorController extends Controller
 
         return response()->json($responseArr);
         
-    }
-
-    public function fetchDistributorTableData(Request $request){
-
-        $tableColumns = ['distributors.id as distributor_id', 'distributors.distributor_name', 'distributors.address', 'distributors.phone'];
-        $searchFields = ['distributors.id','distributors.distributor_name'];
-         
-        $table = DB::table('distributors')
-        ->select( 'distributors.id as distributor_id', 'distributors.distributor_name', 'distributors.address', 'distributors.phone');
-
-        return $this->task_queryTableData($table, $tableColumns, $searchFields, $request);
-         
     }
 
     public function  fetchCountryFilterData(Request $request) {
@@ -178,6 +153,21 @@ class DistributorController extends Controller
 
     }
 
+    //distributer api----------------------------------------------------------------
+
+    public function fetchDistributorTableData(Request $request){
+
+        $tableColumns = ['distributors.id as distributor_id', 'distributors.distributor_name', 'distributors.address', 'distributors.phone'];
+        $searchFields = ['distributors.id','distributors.distributor_name'];
+        $itemStatus = ['status_column' => 'distributor_status', 'status_value' => 1];
+         
+        $table = DB::table('distributors')
+        ->select( 'distributors.id as distributor_id', 'distributors.distributor_name', 'distributors.address', 'distributors.phone');
+
+        return $this->task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus);
+         
+    }
+
     public function  fetchDistributorsUpdateFormData(Request $request) {
 
         $request->validate([
@@ -207,11 +197,22 @@ class DistributorController extends Controller
         ->get()
         ->first();
 
-        $responseArr = [
-            'status' => 'success',
-            'message' => 'Successfully got data from the server.',
-            'payload' => $data
-        ];
+        if($data){
+
+            $responseArr = [
+                'status' => 'success',
+                'message' => 'Successfully got data from the server.',
+                'payload' => $data
+            ];
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'success',
+                'message' => 'Failed to get data from the server.',
+                'payload' => $data
+            ];
+        }
 
         return response()->json($responseArr);
 
@@ -225,8 +226,11 @@ class DistributorController extends Controller
             'phone' => 'required|string',
             'email' => 'required|email',
             'password' => 'required|string',
-            'place_id' => 'required|integer'
+            'place_id' => 'required|integer',
+            'update_item_key' => 'required',
+            'update_item_value' => 'required'
         ]);
+
         
         $newDistributorsRow = [
             'distributor_name' => $request['distributor_name'],
@@ -238,28 +242,114 @@ class DistributorController extends Controller
             'gst_number' =>$request['gst_number']
         ];
         
-        // DB::table('distributors')
-        // ->insert($newDistributorsRow);
+        $updatedRows = DB::table('distributors')
+        ->where($request['update_item_key'], $request['update_item_value'])
+        ->update($newDistributorsRow);
 
-        $responseArr = [
-            'status' => 'success',
-            'message' => 'Successfully updated data in the server.',
-            'payload' => $newDistributorsRow
-        ];
+
+        if ($updatedRows > 0) {
+
+            $responseArr = [
+                'status' => 'success',
+                'error' => false,
+                'message' => 'Successfully updated data in the server.'
+            ];
+        } else {
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true,
+                'message' => 'Data is already upto date in the server'
+            ];
+        }
 
         return response()->json($responseArr);
 
 
     }
 
+    public function deleteDistributor(Request $request){
 
-//--------------------tasks------------------ 
+        $request->validate([
+            'item_key' => 'required',
+            'item_value' => 'required'
+        ]);
+
+        $IN_ACTIVE_STATUS = 0;
+        $newDistributorsRow = [
+            'distributor_status' => $IN_ACTIVE_STATUS
+        ];
+
+        $updatedRows = DB::table('distributors')
+        ->where($request['item_key'],$request['item_value'])
+        ->update($newDistributorsRow);
 
 
-    public function task_queryTableData($table, $tableColumns, $searchFields, $request){
+        if($updatedRows > 0){
+
+            $responseArr = [
+                'status' => 'success',
+                'error' => false,
+                'message' => 'Successfully deleted the distributor'
+            ];
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true,
+                'message' => 'Failed to delete distributor.'
+            ];
+        }
+
+        return response()->json($responseArr);
 
 
+    }
 
+    public function testLogin(Request $request){
+
+        $userToken = $this->task_createApiToken('testUserIdBDM',1,'testSecret');
+
+        $responseArr = [
+            'status' => 'success',
+            'payload' => [
+                'userToken' => $userToken
+            ]
+        ];
+
+        return response()->json($responseArr);
+
+    }
+
+    public function task_createApiToken($userId, $userType, $secretKey){
+
+
+        $payload = [
+            'iss' => 'roadMate',  
+            'iat' => time(),
+            'userId' => $userId,   
+            'userType' => $userType  
+        ];
+        
+        $jwt = JWT::encode($payload, $secretKey, 'HS256');
+
+        return $jwt;
+
+    }
+
+//tasks---------------------------------------------------------------------------------------- 
+
+
+    public function task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus = null ){
+
+        //status
+        if($itemStatus){
+
+            $table->where($itemStatus['status_column'], $itemStatus['status_value']);
+        }
+
+        //search
         if($request->query('search')){
 
             if(count($searchFields) > 0){
@@ -278,21 +368,12 @@ class DistributorController extends Controller
             }
         }
 
-
-
+        //filter
         $filterInfo = $this->task_getRequestFilterInfo($request, $tableColumns);
         $rowsCount = $this->task_getRequestRowsCount($request);
 
-
         $data = $table->orderBy($filterInfo['column'],$filterInfo['state'])
         ->paginate($rowsCount);  
-
-        // return response()->json([
-        //     "status" => "success",
-        //     "error" => 0,
-        //     "message" => "Successfully got table data.",
-        //     // "payload" => $data
-        // ]); 
 
         if($data->isNotEmpty()){
 
@@ -306,7 +387,6 @@ class DistributorController extends Controller
         else{
             return $this->handleError('DATA_NOT_FOUND');
         }
-
 
     }
 

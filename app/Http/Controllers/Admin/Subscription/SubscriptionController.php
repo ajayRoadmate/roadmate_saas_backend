@@ -1,122 +1,68 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Executive;
+namespace App\Http\Controllers\Admin\Subscription;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller; 
 use Illuminate\Support\Facades\DB;
 
-class ExecutiveController extends Controller
+class SubscriptionController extends Controller
 {
 
-    public function testFunExec(Request $request){
+    public function admin_createSubscription(Request $request){
 
-        return response("hello ExecutiveController");
-    }
-
-    public function fetchDistributerFilterData(Request $request){
-
-        $data = DB::table('distributors')
-        ->select('id as filter_value', 'distributor_name as filter_display_value')
-        ->get();
-
-        if($data->isNotEmpty()){
-
-            $responseArr = [
-                'status' => 'success',
-                'message' => 'Successfully got data from the server.',
-                'payload' => $data
-            ];
-    
-
-        }
-        else{
-
-            $responseArr = [
-                'status' => 'failed',
-                'message' => 'Failed to get data from the server.'
-            ];
-    
-        }
-
-        return response()->json($responseArr);
-
-
-    }
-
-    public function admin_createExecutive(Request $request){
-
-        
         $request->validate([
-            'executive_name' => 'required|string',
-            'email' => 'required|email',
-            'address' => 'required|string',
-            'phone' => 'required|string',
-            'place_id' => 'required|integer',
-            'distributor_id' => 'required|integer',
+            'subscription_name' => 'required|string',
+            'description' => 'required|string',
+            'validity' => 'required|integer',
+            'subscription_price' => 'required|numeric|min:0',
         ]);
 
-        $executiveToken = "test token";
-
-        $newExecutivesRow = [
-            'executive_name' => $request['executive_name'],
-            'email' => $request['email'],
-            'address' => $request['address'],
-            'phone' => $request['phone'],
-            'place_id' => $request['place_id'],
-            'distributor_id' => $request['distributor_id']
+        $newSaasSubscriptionsRow = [
+            'subscription_name' => $request['subscription_name'],
+            'description' => $request['description'],
+            'validity' => $request['validity'],
+            'subscription_price' => $request['subscription_price']
         ];
 
-        DB::table('executives')
-        ->insert($newExecutivesRow);
+        DB::table('saas_subscriptions')
+        ->insert($newSaasSubscriptionsRow);
 
         $responseArr = [
             'status' => 'success',
-            'message' => 'Successfully added executive in the database.'
+            'message' => 'Successfully added subscription in the database.'
         ];
 
         return response()->json($responseArr);
-
-
     }
 
-    public function admin_fetchExecutiveTableData(Request $request){
+    public function admin_fetchSubscriptionTableData(Request $request){
 
-        $tableColumns = ['executives.id as executive_id', 'executives.executive_name', 'executives.address', 'executives.phone'];
-        $searchFields = ['executives.id','executives.executive_name'];
-        $itemStatus = ['status_column' => 'executives.executive_status', 'status_value' => 1];
+        $tableColumns = ['saas_subscriptions.id as subscription_id', 'saas_subscriptions.subscription_name', 'saas_subscriptions.description', 'saas_subscriptions.validity', 'saas_subscriptions.subscription_price'];
+        $searchFields = ['saas_subscriptions.id','saas_subscriptions.subscription_name'];
+        $itemStatus = ['status_column' => 'saas_subscriptions.subscription_status', 'status_value' => 1];
          
-        $table = DB::table('executives')
-        ->select( 'executives.id as executive_id', 'executives.executive_name', 'executives.address', 'executives.phone');
+        $table = DB::table('saas_subscriptions')
+        ->select( 'saas_subscriptions.id as subscription_id', 'saas_subscriptions.subscription_name', 'saas_subscriptions.description', 'saas_subscriptions.validity', 'saas_subscriptions.subscription_price');
 
         return $this->task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus);
 
     }
 
-    public function admin_fetchExecutiveUpdateFormData(Request $request){
+    public function admin_fetchSubscriptionUpdateFormData(Request $request){
 
         $request->validate([
             'item_key' => 'required',
             'item_value' => 'required'
         ]);
 
-
-        $data = DB::table('executives')
-        ->leftJoin('places','executives.place_id','=','places.id')
-        ->leftJoin('districts','places.district_id','=','districts.id')
-        ->leftJoin('states','districts.state_id','=','states.id')
+        $data = DB::table('saas_subscriptions')
         ->where($request['item_key'],$request['item_value'])
         ->select(
-            'executives.executive_name',
-            'executives.address',
-            'executives.email',
-            'executives.phone',
-            'executives.distributor_id',
-            'executives.place_id',
-            'places.place_type_id',
-            'places.district_id',
-            'districts.state_id',
-            'states.country_id'
+            'saas_subscriptions.subscription_name',
+            'saas_subscriptions.description',
+            'saas_subscriptions.validity',
+            'saas_subscriptions.subscription_price'
         )
         ->get()
         ->first();
@@ -139,37 +85,31 @@ class ExecutiveController extends Controller
         }
 
         return response()->json($responseArr);
-
-
+        
     }
 
-    public function admin_updateExecutive(Request $request){
+    public function admin_updateSubscription(Request $request){
 
         $request->validate([
-            'executive_name' => 'required|string',
-            'email' => 'required|email',
-            'address' => 'required|string',
-            'phone' => 'required|string',
-            'place_id' => 'required|integer',
-            'distributor_id' => 'required|integer',
+            'subscription_name' => 'required|string',
+            'description' => 'required|string',
+            'validity' => 'required|integer',
+            'subscription_price' => 'required|numeric|min:0',
             'update_item_key' => 'required',
             'update_item_value' => 'required'
         ]);
 
-        $executiveToken = "test token";
-
-        $newExecutivesRow = [
-            'executive_name' => $request['executive_name'],
-            'email' => $request['email'],
-            'address' => $request['address'],
-            'phone' => $request['phone'],
-            'place_id' => $request['place_id'],
-            'distributor_id' => $request['distributor_id']
+        $newSaasSubscriptionsRow = [
+            'subscription_name' => $request['subscription_name'],
+            'description' => $request['description'],
+            'validity' => $request['validity'],
+            'subscription_price' => $request['subscription_price']
         ];
 
-        $updatedRows = DB::table('executives')
+
+        $updatedRows = DB::table('saas_subscriptions')
         ->where($request['update_item_key'], $request['update_item_value'])
-        ->update($newExecutivesRow);
+        ->update($newSaasSubscriptionsRow);
 
 
         if ($updatedRows > 0) {
@@ -189,11 +129,10 @@ class ExecutiveController extends Controller
         }
 
         return response()->json($responseArr);
-        
 
     }
 
-    public function admin_deleteExecutive(Request $request){
+    public function admin_deleteSubscription(Request $request){
 
         $request->validate([
             'item_key' => 'required',
@@ -201,20 +140,20 @@ class ExecutiveController extends Controller
         ]);
 
         $IN_ACTIVE_STATUS = 0;
-        $newExecutivesRow = [
-            'executive_status' => $IN_ACTIVE_STATUS
+        $newSubscriptionRow = [
+            'subscription_status' => $IN_ACTIVE_STATUS
         ];
 
-        $updatedRows = DB::table("executives")
+        $updatedRows = DB::table("saas_subscriptions")
         ->where($request['item_key'], $request['item_value'])
-        ->update($newExecutivesRow);
+        ->update($newSubscriptionRow);
 
         if ($updatedRows > 0) {
 
             $responseArr = [
                 'status' => 'success',
                 'error' => false,
-                'message' => 'Successfully deleted the executive.'
+                'message' => 'Successfully deleted the subscription.'
             ];
         } else {
 
@@ -230,7 +169,9 @@ class ExecutiveController extends Controller
     }
 
 
-//tasks---------------------------------------------------------------------------------------- 
+
+    
+    //tasks---------------------------------------------------------------------------------------- 
 
 
     public function task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus = null ){
@@ -247,7 +188,7 @@ class ExecutiveController extends Controller
             if(count($searchFields) > 0){
 
                 for ($i=0; $i < count($searchFields); $i++) { 
-    
+
                     if($i == 0){
 
                         $table->where($searchFields[$i], 'LIKE', '%' . $request->query('search') . '%');
@@ -255,7 +196,7 @@ class ExecutiveController extends Controller
                     else{
                         $table->orWhere($searchFields[$i], 'LIKE', '%' . $request->query('search') . '%');
                     }
-    
+
                 }
             }
         }
@@ -301,7 +242,7 @@ class ExecutiveController extends Controller
                     'column' => $filterColumn,
                     'state' => $request->query('filter_state')
                 ];
-    
+
                 return $filterInfo;
             }
             else{
@@ -310,7 +251,7 @@ class ExecutiveController extends Controller
                     'column' => 'id',
                     'state' => 'desc'
                 ];
-    
+
                 return $filterInfo;
             }
 
@@ -359,7 +300,7 @@ class ExecutiveController extends Controller
                 $columnName = explode('.',$column);
 
                 if($filterColumn == $columnName[1]){
-    
+
                     return true;
                 }
             }
@@ -388,7 +329,7 @@ class ExecutiveController extends Controller
                 $columnName = explode('.',$column);
 
                 if($filterColumn == $columnName[1]){
-    
+
                     return $column;
                 }
             }
@@ -398,7 +339,4 @@ class ExecutiveController extends Controller
     }
 
 
-
-
 }
-

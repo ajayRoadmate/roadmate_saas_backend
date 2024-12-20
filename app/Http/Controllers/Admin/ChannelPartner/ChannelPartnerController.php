@@ -1,118 +1,129 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Executive;
+namespace App\Http\Controllers\Admin\ChannelPartner;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller; 
 use Illuminate\Support\Facades\DB;
 
-class ExecutiveController extends Controller
+class ChannelPartnerController extends Controller
 {
 
-    public function testFunExec(Request $request){
+    public function admin_createChannelPartner(Request $request){
 
-        return response("hello ExecutiveController");
-    }
-
-    public function fetchDistributerFilterData(Request $request){
-
-        $data = DB::table('distributors')
-        ->select('id as filter_value', 'distributor_name as filter_display_value')
-        ->get();
-
-        if($data->isNotEmpty()){
-
-            $responseArr = [
-                'status' => 'success',
-                'message' => 'Successfully got data from the server.',
-                'payload' => $data
-            ];
-    
-
-        }
-        else{
-
-            $responseArr = [
-                'status' => 'failed',
-                'message' => 'Failed to get data from the server.'
-            ];
-    
-        }
-
-        return response()->json($responseArr);
-
-
-    }
-
-    public function admin_createExecutive(Request $request){
-
-        
         $request->validate([
-            'executive_name' => 'required|string',
-            'email' => 'required|email',
+            'channel_partner_name' => 'required|string',
             'address' => 'required|string',
             'phone' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string',
             'place_id' => 'required|integer',
-            'distributor_id' => 'required|integer',
+            'gst_number' => 'nullable|string'
         ]);
 
-        $executiveToken = "test token";
-
-        $newExecutivesRow = [
-            'executive_name' => $request['executive_name'],
-            'email' => $request['email'],
+        $newChannelPartnersRow = [
+            'channel_partner_name' => $request['channel_partner_name'],
             'address' => $request['address'],
             'phone' => $request['phone'],
+            'email' => $request['email'],
+            'password' => $request['password'], 
             'place_id' => $request['place_id'],
-            'distributor_id' => $request['distributor_id']
+            'gst_number' => $request['gst_number'] ?? null
         ];
 
-        DB::table('executives')
-        ->insert($newExecutivesRow);
+        DB::table('channel_partners')
+        ->insert($newChannelPartnersRow);
 
         $responseArr = [
             'status' => 'success',
-            'message' => 'Successfully added executive in the database.'
+            'message' => 'Successfully added channel partner in the database.'
         ];
 
         return response()->json($responseArr);
 
-
     }
 
-    public function admin_fetchExecutiveTableData(Request $request){
+    public function admin_fetchChannelPartnerTableData(Request $request){
 
-        $tableColumns = ['executives.id as executive_id', 'executives.executive_name', 'executives.address', 'executives.phone'];
-        $searchFields = ['executives.id','executives.executive_name'];
-        $itemStatus = ['status_column' => 'executives.executive_status', 'status_value' => 1];
+        $tableColumns = ['channel_partners.id as channel_partner_id', 'channel_partners.channel_partner_name', 'channel_partners.address', 'channel_partners.phone'];
+        $searchFields = ['channel_partners.id','channel_partners.channel_partner_name'];
+        $itemStatus = ['status_column' => 'channel_partners.channel_partner_status', 'status_value' => 1];
          
-        $table = DB::table('executives')
-        ->select( 'executives.id as executive_id', 'executives.executive_name', 'executives.address', 'executives.phone');
+        $table = DB::table('channel_partners')
+        ->select( 'channel_partners.id as channel_partner_id', 'channel_partners.channel_partner_name', 'channel_partners.address', 'channel_partners.phone');
 
         return $this->task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus);
 
     }
 
-    public function admin_fetchExecutiveUpdateFormData(Request $request){
+    public function admin_updateChannelPartner(Request $request){
+
+
+        $request->validate([
+            'channel_partner_name' => 'required|string',
+            'address' => 'required|string',
+            'phone' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string',
+            'place_id' => 'required|integer',
+            'gst_number' => 'nullable|string'
+        ]);
+
+        $newChannelPartnersRow = [
+            'channel_partner_name' => $request['channel_partner_name'],
+            'address' => $request['address'],
+            'phone' => $request['phone'],
+            'email' => $request['email'],
+            'password' => $request['password'], 
+            'place_id' => $request['place_id'],
+            'gst_number' => $request['gst_number'] ?? null
+        ];
+
+        $updatedRows = DB::table('channel_partners')
+        ->where($request['update_item_key'], $request['update_item_value'])
+        ->update($newChannelPartnersRow);
+
+
+        if ($updatedRows > 0) {
+
+            $responseArr = [
+                'status' => 'success',
+                'error' => false,
+                'message' => 'Successfully updated data in the server.'
+            ];
+        } else {
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true,
+                'message' => 'Data is already upto date in the server'
+            ];
+        }
+
+        return response()->json($responseArr);
+
+    }
+
+    public function admin_fetchChannelPartnerUpdateFormData(Request $request){
 
         $request->validate([
             'item_key' => 'required',
             'item_value' => 'required'
         ]);
 
-
-        $data = DB::table('executives')
-        ->leftJoin('places','executives.place_id','=','places.id')
+        $data = DB::table('channel_partners')
+        ->leftJoin('places','channel_partners.place_id','=','places.id')
         ->leftJoin('districts','places.district_id','=','districts.id')
         ->leftJoin('states','districts.state_id','=','states.id')
         ->where($request['item_key'],$request['item_value'])
         ->select(
-            'executives.executive_name',
-            'executives.address',
-            'executives.email',
-            'executives.phone',
-            'executives.distributor_id',
-            'executives.place_id',
+            'channel_partners.channel_partner_name',
+            'channel_partners.address',
+            'channel_partners.email',
+            'channel_partners.phone',
+            'channel_partners.password',
+            'channel_partners.gst_number',
+            'channel_partners.place_id',
             'places.place_type_id',
             'places.district_id',
             'districts.state_id',
@@ -139,98 +150,13 @@ class ExecutiveController extends Controller
         }
 
         return response()->json($responseArr);
-
-
-    }
-
-    public function admin_updateExecutive(Request $request){
-
-        $request->validate([
-            'executive_name' => 'required|string',
-            'email' => 'required|email',
-            'address' => 'required|string',
-            'phone' => 'required|string',
-            'place_id' => 'required|integer',
-            'distributor_id' => 'required|integer',
-            'update_item_key' => 'required',
-            'update_item_value' => 'required'
-        ]);
-
-        $executiveToken = "test token";
-
-        $newExecutivesRow = [
-            'executive_name' => $request['executive_name'],
-            'email' => $request['email'],
-            'address' => $request['address'],
-            'phone' => $request['phone'],
-            'place_id' => $request['place_id'],
-            'distributor_id' => $request['distributor_id']
-        ];
-
-        $updatedRows = DB::table('executives')
-        ->where($request['update_item_key'], $request['update_item_value'])
-        ->update($newExecutivesRow);
-
-
-        if ($updatedRows > 0) {
-
-            $responseArr = [
-                'status' => 'success',
-                'error' => false,
-                'message' => 'Successfully updated data in the server.'
-            ];
-        } else {
-
-            $responseArr = [
-                'status' => 'failed',
-                'error' => true,
-                'message' => 'Data is already upto date in the server'
-            ];
-        }
-
-        return response()->json($responseArr);
         
-
     }
 
-    public function admin_deleteExecutive(Request $request){
-
-        $request->validate([
-            'item_key' => 'required',
-            'item_value' => 'required'
-        ]);
-
-        $IN_ACTIVE_STATUS = 0;
-        $newExecutivesRow = [
-            'executive_status' => $IN_ACTIVE_STATUS
-        ];
-
-        $updatedRows = DB::table("executives")
-        ->where($request['item_key'], $request['item_value'])
-        ->update($newExecutivesRow);
-
-        if ($updatedRows > 0) {
-
-            $responseArr = [
-                'status' => 'success',
-                'error' => false,
-                'message' => 'Successfully deleted the executive.'
-            ];
-        } else {
-
-            $responseArr = [
-                'status' => 'failed',
-                'error' => true,
-                'message' => 'Data is already deleted'
-            ];
-        }
-
-        return response()->json($responseArr);
-
-    }
+    
 
 
-//tasks---------------------------------------------------------------------------------------- 
+    //tasks---------------------------------------------------------------------------------------- 
 
 
     public function task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus = null ){
@@ -247,7 +173,7 @@ class ExecutiveController extends Controller
             if(count($searchFields) > 0){
 
                 for ($i=0; $i < count($searchFields); $i++) { 
-    
+
                     if($i == 0){
 
                         $table->where($searchFields[$i], 'LIKE', '%' . $request->query('search') . '%');
@@ -255,7 +181,7 @@ class ExecutiveController extends Controller
                     else{
                         $table->orWhere($searchFields[$i], 'LIKE', '%' . $request->query('search') . '%');
                     }
-    
+
                 }
             }
         }
@@ -301,7 +227,7 @@ class ExecutiveController extends Controller
                     'column' => $filterColumn,
                     'state' => $request->query('filter_state')
                 ];
-    
+
                 return $filterInfo;
             }
             else{
@@ -310,7 +236,7 @@ class ExecutiveController extends Controller
                     'column' => 'id',
                     'state' => 'desc'
                 ];
-    
+
                 return $filterInfo;
             }
 
@@ -359,7 +285,7 @@ class ExecutiveController extends Controller
                 $columnName = explode('.',$column);
 
                 if($filterColumn == $columnName[1]){
-    
+
                     return true;
                 }
             }
@@ -388,7 +314,7 @@ class ExecutiveController extends Controller
                 $columnName = explode('.',$column);
 
                 if($filterColumn == $columnName[1]){
-    
+
                     return $column;
                 }
             }
@@ -400,5 +326,9 @@ class ExecutiveController extends Controller
 
 
 
+
 }
+
+
+
 
