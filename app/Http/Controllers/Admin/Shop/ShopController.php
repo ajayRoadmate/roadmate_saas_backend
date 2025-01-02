@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin\Shop;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller; 
 use Illuminate\Support\Facades\DB;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class ShopController extends Controller
 {
@@ -20,6 +22,24 @@ class ShopController extends Controller
     
         return $this->task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus);
     
+    }
+
+    public function distributor_fetchShopTableData(Request $request){
+
+        $headerInfo = $this->getHeaderInfo($request);
+        $distributorId = $headerInfo->distributorId;
+
+        $tableColumns = ['shops_distributors.id as id', 'shops.id as shop_id', 'shops.shop_name', 'shops.address', 'shops.phone_primary'];
+        $searchFields = ['shops_distributors.id','shops_distributors.shop_name'];
+        $itemStatus = ['status_column' => 'shops.shop_status', 'status_value' => 1];
+         
+        $table = DB::table('shops_distributors')
+        ->leftJoin('shops','shops_distributors.shop_id', '=', 'shops.id')
+        ->where('shops_distributors.distributor_id', $distributorId)
+        ->select($tableColumns);
+    
+        return $this->task_queryTableData($table, $tableColumns, $searchFields, $request);
+        
     }
 
 
@@ -188,6 +208,15 @@ class ShopController extends Controller
 
         }
 
+    }
+
+    public function getHeaderInfo($request){
+
+        $headerValue = $request->header('user-token');
+
+        $appSecret = config('app.app_secret');
+
+        return JWT::decode($headerValue, new Key($appSecret, 'HS256'));
     }
 
 

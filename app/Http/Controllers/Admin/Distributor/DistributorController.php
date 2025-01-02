@@ -13,15 +13,16 @@ class DistributorController extends Controller
 
     public function testFun(Request $request){
 
-        // $headerValue = $request->header('user-token');
+        $headerValue = $request->header('user-token');
 
-        // return response()->json([
-        //     'status'=> 'success',
-        //     'userToken'=> $headerValue
-        // ]);
+        $appSecret = config('app.app_secret');
 
-        return response("hello response change");
+        $decoded = JWT::decode($headerValue, new Key($appSecret, 'HS256'));
 
+        return response()->json([
+            'status'=> 'success',
+            'userToken'=> $decoded
+        ]);
 
     }
 
@@ -315,9 +316,43 @@ class DistributorController extends Controller
 
     }
 
-    public function testLogin(Request $request){
+    public function testAdminLogin(Request $request){
 
-        $userToken = $this->task_createApiToken('testUserIdBDM',1,'testSecret');
+        $appSecret = config('app.app_secret');
+        
+        $payload = [
+            'iss' => 'roadMate',  
+            'iat' => time(),
+            'userId' => 1,   
+            'userType' => 1
+        ];
+        
+        $userToken = JWT::encode($payload, $appSecret, 'HS256');
+
+        $responseArr = [
+            'status' => 'success',
+            'payload' => [
+                'userToken' => $userToken
+            ]
+        ];
+
+        return response()->json($responseArr);
+
+    }
+
+    public function testDistributorLogin(Request $request){
+
+        $appSecret = config('app.app_secret');
+        
+        $payload = [
+            'iss' => 'roadMate',  
+            'iat' => time(),
+            'userId' => 1,   
+            'userType' => 3,
+            'distributorId' => 1
+        ];
+        
+        $userToken = JWT::encode($payload, $appSecret, 'HS256');
 
         $responseArr = [
             'status' => 'success',

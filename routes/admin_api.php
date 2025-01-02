@@ -27,7 +27,8 @@ Route::get('fetchDistributorsUpdateFormData', [DistributorController::class, 'fe
 Route::post('testFormSubmit', [DistributorController::class, 'testFormSubmit']);
 Route::post('updateDistributorFormSubmit', [DistributorController::class, 'updateDistributorFormSubmit']);
 Route::get('deleteDistributor', [DistributorController::class, 'deleteDistributor']);
-Route::post('testLogin', [DistributorController::class, 'testLogin']);
+Route::post('testAdminLogin', [DistributorController::class, 'testAdminLogin']);
+Route::post('testDistributorLogin', [DistributorController::class, 'testDistributorLogin']);
 
 
 
@@ -81,3 +82,9 @@ Route::get('admin_unitFilterData', [ProductController::class, 'admin_unitFilterD
 Route::get('admin_fetchProductUpdateFormData', [ProductController::class, 'admin_fetchProductUpdateFormData']);
 Route::post('admin_updateProduct', [ProductController::class, 'admin_updateProduct']);
 Route::get('admin_fetchProductDetailsTableData', [ProductController::class, 'admin_fetchProductDetailsTableData']);
+
+
+
+//distributor module
+Route::get('distributor_fetchShopTableData', [ShopController::class, 'distributor_fetchShopTableData']);
+
