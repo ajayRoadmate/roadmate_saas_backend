@@ -13,7 +13,15 @@ class DistributorController extends Controller
 
     public function testFun(Request $request){
 
-        return response("hello change git");
+        // $headerValue = $request->header('user-token');
+
+        // return response()->json([
+        //     'status'=> 'success',
+        //     'userToken'=> $headerValue
+        // ]);
+
+        return response("hello response");
+
 
     }
 
