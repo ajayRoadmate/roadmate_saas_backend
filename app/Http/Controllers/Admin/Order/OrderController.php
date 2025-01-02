@@ -15,13 +15,13 @@ class OrderController extends Controller
             'order_id' => 'required'
         ]);
          
-        $tableColumns = ['b2b_order_details.id as order_details_id', 'products.product_name', 'product_variants.variant_name', 'b2b_order_details.selling_price', 'b2b_order_details.quantity'];
+        $tableColumns = ['b2b_order_details.id as order_details_id', 'b2b_order_details.order_master_id as order_id', 'products.product_name', 'product_variants.b2b_selling_price', 'product_variants.mrp', 'product_variants.purchase_price'];
         $searchFields = ['b2b_order_details.id'];
 
         $table = DB::table('b2b_order_details')
         ->leftJoin('products','b2b_order_details.product_id','=','products.id')
         ->leftJoin('product_variants', 'b2b_order_details.product_variant_id', '=', 'product_variants.id')
-        ->select('b2b_order_details.id as order_details_id', 'products.product_name', 'product_variants.variant_name', 'b2b_order_details.selling_price', 'b2b_order_details.quantity');
+        ->select($tableColumns);
 
         return $this->task_queryTableData($table, $tableColumns, $searchFields, $request);
     
