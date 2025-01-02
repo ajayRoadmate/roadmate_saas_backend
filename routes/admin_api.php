@@ -75,5 +75,9 @@ Route::post('admin_createProduct', [ProductController::class, 'admin_createProdu
 Route::get('admin_fetchCategoryFilterData', [ProductController::class, 'admin_fetchCategoryFilterData']);
 Route::get('admin_fetchBrandFilterData', [ProductController::class, 'admin_fetchBrandFilterData']);
 Route::get('admin_fetchDistributorFilterData', [ProductController::class, 'admin_fetchDistributorFilterData']);
-
-
+Route::get('admin_fetchSubCategoryFilterData', [ProductController::class, 'admin_fetchSubCategoryFilterData']);
+Route::get('admin_fetchHsnCodeFilterData', [ProductController::class, 'admin_fetchHsnCodeFilterData']);
+Route::get('admin_unitFilterData', [ProductController::class, 'admin_unitFilterData']);
+Route::get('admin_fetchProductUpdateFormData', [ProductController::class, 'admin_fetchProductUpdateFormData']);
+Route::post('admin_updateProduct', [ProductController::class, 'admin_updateProduct']);
+Route::get('admin_fetchProductDetailsTableData', [ProductController::class, 'admin_fetchProductDetailsTableData']);

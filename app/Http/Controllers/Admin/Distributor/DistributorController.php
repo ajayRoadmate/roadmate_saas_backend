@@ -13,7 +13,7 @@ class DistributorController extends Controller
 
     public function testFun(Request $request){
 
-        return response("hello change");
+        return response("hello change git");
 
     }
 
