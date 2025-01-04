@@ -29,6 +29,7 @@ Route::post('updateDistributorFormSubmit', [DistributorController::class, 'updat
 Route::get('deleteDistributor', [DistributorController::class, 'deleteDistributor']);
 Route::post('testAdminLogin', [DistributorController::class, 'testAdminLogin']);
 Route::post('testDistributorLogin', [DistributorController::class, 'testDistributorLogin']);
+Route::post('testChannelPartnerLogin', [DistributorController::class, 'testChannelPartnerLogin']);
 
 
 
@@ -85,6 +86,31 @@ Route::get('admin_fetchProductDetailsTableData', [ProductController::class, 'adm
 
 
 
-//distributor module
+//distributor dashboard
 Route::get('distributor_fetchShopTableData', [ShopController::class, 'distributor_fetchShopTableData']);
+
+Route::get('distributor_fetchExecutiveTableData', [ExecutiveController::class, 'distributor_fetchExecutiveTableData']);
+Route::post('distributor_createExecutive', [ExecutiveController::class, 'distributor_createExecutive']);
+Route::post('distributor_updateExecutive', [ExecutiveController::class, 'distributor_updateExecutive']);
+
+Route::get('distributor_fetchProductTableData', [ProductController::class, 'distributor_fetchProductTableData']);
+Route::post('distributor_createProduct', [ProductController::class, 'distributor_createProduct']);
+Route::post('distributor_updateProduct', [ProductController::class, 'distributor_updateProduct']);
+
+Route::get('distributor_fetchAllOrderTableData', [OrderController::class, 'distributor_fetchAllOrderTableData']);
+Route::post('distributor_updateOrder', [OrderController::class, 'distributor_updateOrder']);
+Route::get('distributor_cancelOrder', [OrderController::class, 'distributor_cancelOrder']);
+
+Route::get('distributor_info', [DistributorController::class, 'distributor_info']);
+
+
+
+
+//channel partner
+Route::get('channelPartner_fetchDistributorTableData', [DistributorController::class, 'channelPartner_fetchDistributorTableData']);
+Route::post('channelPartner_createDistributor', [DistributorController::class, 'channelPartner_createDistributor']);
+Route::post('channelPartner_updateDistributor', [DistributorController::class, 'channelPartner_updateDistributor']);
+Route::get('channelPartner_fetchInfo', [ChannelPartnerController::class, 'channelPartner_fetchInfo']);
+
+
 

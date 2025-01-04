@@ -26,7 +26,7 @@ class ShopController extends Controller
 
     public function distributor_fetchShopTableData(Request $request){
 
-        $headerInfo = $this->getHeaderInfo($request);
+        $headerInfo = $this->task_getHeaderInfo($request);
         $distributorId = $headerInfo->distributorId;
 
         $tableColumns = ['shops_distributors.id as id', 'shops.id as shop_id', 'shops.shop_name', 'shops.address', 'shops.phone_primary'];
@@ -210,7 +210,7 @@ class ShopController extends Controller
 
     }
 
-    public function getHeaderInfo($request){
+    public function task_getHeaderInfo($request){
 
         $headerValue = $request->header('user-token');
 

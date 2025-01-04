@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin\Product;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller; 
 use Illuminate\Support\Facades\DB;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class ProductController extends Controller
 {
@@ -463,6 +465,173 @@ class ProductController extends Controller
 
     }
 
+    public function distributor_fetchProductTableData(Request $request){
+
+        $tableColumns = ['products.id as product_id', 'products.product_name', 'brands.brand_name', 'distributors.distributor_name', 'categories.category_name' ];
+        $searchFields = ['products.id'];
+
+        $table = DB::table('products')
+        ->leftJoin('distributors', 'products.distributor_id', 'distributors.id')
+        ->leftJoin('brands', 'products.brand_id', 'brands.id')
+        ->leftJoin('categories', 'products.category_id', 'categories.id')
+        ->select($tableColumns);
+
+        return $this->task_queryTableData($table, $tableColumns, $searchFields, $request);
+    
+    }
+
+    public function distributor_createProduct(Request $request){
+
+        $headerInfo = $this->task_getHeaderInfo($request);
+        $distributorId = $headerInfo->distributorId;
+
+        $newProductRow =[
+            'product_name' => $request['product_name'],
+            'description' => $request['description'],
+            'category_id' => $request['category_id'],
+            'sub_category_id' => $request['sub_category_id'],
+            'brand_id' => $request['brand_id'],
+            'distributor_id' => $distributorId,
+            'hsn_code_id' => $request['hsn_code_id'],
+        ];
+
+
+        $productId  = DB::table('products')
+        ->insertGetId($newProductRow);
+
+        $variants = $this->task_getVariants($request);
+
+        $imageList = [];
+
+        $newProductVariantRow = [];
+
+        $testArr = [];
+        foreach($variants as $variant){
+
+            $newProductVariantRow = [
+                'product_id' => $productId,
+                'unit_id' => $variant['unit_id'],
+                'unit_quantity' => $variant['unit_quantity'],
+                'stock_quantity' => $variant['stock_quantity'],
+                'purchase_price' => $variant['purchase_price'],
+                'mrp' => $variant['mrp'],
+                'b2c_selling_price' => $variant['b2c_selling_price'],
+                'b2b_selling_price' => $variant['b2b_selling_price'],
+                'b2b_status' => 1,
+                'b2c_status' => 1,
+                'approve_status' => 1
+            ];
+
+            array_push($testArr, $newProductVariantRow);
+
+            $productVariantId = DB::table('product_variants')
+            ->insertGetId($newProductVariantRow);
+
+            $imageList = $this->task_uploadFiles($variant['variant_image'], 'images');
+
+            foreach($imageList as $image){
+
+                $newVariantImageRow = [
+                    'product_variant_id' => $productVariantId,
+                    'image' => $image,
+                    'product_image_status' =>  1
+                ];
+
+                DB::table('product_images')
+                ->insert($newVariantImageRow);
+            }
+
+        }
+
+
+        $responseArr = [
+            'status' => 'success',
+            'message' => 'Successfully added product into the database.'
+        ];
+
+        return response()->json($responseArr);
+    
+    }
+
+    public function distributor_updateProduct(Request $request){
+
+        $headerInfo = $this->task_getHeaderInfo($request);
+        $distributorId = $headerInfo->distributorId;
+
+        $newProductRow =[
+            'product_name' => $request['product_name'],
+            'description' => $request['description'],
+            'category_id' => $request['category_id'],
+            'sub_category_id' => $request['sub_category_id'],
+            'brand_id' => $request['brand_id'],
+            'distributor_id' => $distributorId,
+            'hsn_code_id' => $request['hsn_code_id']
+        ];
+
+        DB::table('products')
+        ->where('id', $request['product_id'])
+        ->update($newProductRow);
+
+        $variants = $this->task_getVariants($request);
+
+        $imageList = [];
+
+        $newProductVariantRow = [];
+
+        $testArr = [];
+
+        foreach($variants as $key => $variant){
+
+            $variantId = $key;
+
+            $newProductVariantRow = [
+                'product_id' => $request['product_id'],
+                'unit_id' => $variant['unit_id'],
+                'unit_quantity' => $variant['unit_quantity'],
+                'stock_quantity' => $variant['stock_quantity'],
+                'purchase_price' => $variant['purchase_price'],
+                'mrp' => $variant['mrp'],
+                'b2c_selling_price' => $variant['b2c_selling_price'],
+                'b2b_selling_price' => $variant['b2b_selling_price']
+            ];
+
+            DB::table('product_variants')
+            ->where('id', $variantId)
+            ->update($newProductVariantRow);
+
+            if(array_key_exists('variant_image', $variant)){
+
+                array_push($testArr, $variant['variant_image']);
+
+                $imageList = $this->task_uploadFiles($variant['variant_image'], 'images');
+
+                foreach($imageList as $image){
+    
+                    $newVariantImageRow = [
+                        'product_variant_id' => $variantId,
+                        'image' => $image,
+                        'product_image_status' =>  1
+                    ];
+    
+                    DB::table('product_images')
+                    ->where('product_variant_id', $variantId)
+                    ->update($newVariantImageRow);
+                }
+            }
+
+
+
+        }
+
+        $responseArr = [
+            'status' => 'success',
+            'message' => 'Successfully updated product in the database.'
+        ];
+
+        return response()->json($responseArr);
+    
+    }
+
 
 //tasks---------------------------------------------------------------------------------------- 
 
@@ -660,6 +829,15 @@ class ProductController extends Controller
             return response()->json($responseArr);
         }
 
+    }
+
+    public function task_getHeaderInfo($request){
+
+        $headerValue = $request->header('user-token');
+
+        $appSecret = config('app.app_secret');
+
+        return JWT::decode($headerValue, new Key($appSecret, 'HS256'));
     }
 
     //order tasks--------------------------------------------------------------------
