@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin\ChannelPartner;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller; 
 use Illuminate\Support\Facades\DB;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
+
 
 class ChannelPartnerController extends Controller
 {
@@ -151,6 +154,43 @@ class ChannelPartnerController extends Controller
 
         return response()->json($responseArr);
         
+    }
+
+    public function channelPartner_fetchInfo(Request $request){
+
+        $headerInfo = $this->task_getHeaderInfo($request);
+        $channelPartnerId = $headerInfo->channelPartnerId;
+
+        $channelPartnerInfo = DB::table('channel_partners')
+        ->where('id', $channelPartnerId)
+        ->select([
+            'channel_partner_name', 'email', 'phone', 'password', 'address'
+        ])
+        ->get()
+        ->first();
+
+        if($channelPartnerInfo){
+
+            $responseArr = [
+                'status' => 'success',
+                'message' => 'Succfully got data form the server.',
+                'payload' => $channelPartnerInfo
+            ];
+
+            return response()->json($responseArr);
+
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'message' => 'Failed to fetch data form the server.'
+            ];
+            return response()->json($responseArr);
+        }
+
+
+
     }
 
     
@@ -323,6 +363,14 @@ class ChannelPartnerController extends Controller
 
     }
 
+    public function task_getHeaderInfo($request){
+
+        $headerValue = $request->header('user-token');
+
+        $appSecret = config('app.app_secret');
+
+        return JWT::decode($headerValue, new Key($appSecret, 'HS256'));
+    }
 
 
 

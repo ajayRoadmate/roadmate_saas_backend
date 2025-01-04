@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin\Executive;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller; 
 use Illuminate\Support\Facades\DB;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
 class ExecutiveController extends Controller
 {
@@ -230,7 +232,109 @@ class ExecutiveController extends Controller
     }
 
 
+    public function distributor_fetchExecutiveTableData(Request $request){
+
+        $tableColumns = ['executives.id as executive_id', 'executives.executive_name', 'executives.address', 'executives.phone'];
+        $searchFields = ['executives.id','executives.executive_name'];
+        $itemStatus = ['status_column' => 'executives.executive_status', 'status_value' => 1];
+         
+        $table = DB::table('executives')
+        ->select( 'executives.id as executive_id', 'executives.executive_name', 'executives.address', 'executives.phone');
+
+        return $this->task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus);
+
+    }
+
+    public function distributor_createExecutive(Request $request){
+
+        
+        $request->validate([
+            'executive_name' => 'required|string',
+            'email' => 'required|email',
+            'address' => 'required|string',
+            'phone' => 'required|string',
+            'place_id' => 'required|integer'
+        ]);
+
+        $headerInfo = $this->task_getHeaderInfo($request);
+        $distributorId = $headerInfo->distributorId;
+
+        $newExecutivesRow = [
+            'executive_name' => $request['executive_name'],
+            'email' => $request['email'],
+            'address' => $request['address'],
+            'phone' => $request['phone'],
+            'place_id' => $request['place_id'],
+            'distributor_id' => $distributorId
+        ];
+
+        DB::table('executives')
+        ->insert($newExecutivesRow);
+
+        $responseArr = [
+            'status' => 'success',
+            'message' => 'Successfully added executive in the database.'
+        ];
+
+        return response()->json($responseArr);
+
+
+    }
+
+    public function distributor_updateExecutive(Request $request){
+
+        $request->validate([
+            'executive_name' => 'required|string',
+            'email' => 'required|email',
+            'address' => 'required|string',
+            'phone' => 'required|string',
+            'place_id' => 'required|integer',
+            'update_item_key' => 'required',
+            'update_item_value' => 'required'
+        ]);
+
+        $headerInfo = $this->task_getHeaderInfo($request);
+        $distributorId = $headerInfo->distributorId;
+
+        $newExecutivesRow = [
+            'executive_name' => $request['executive_name'],
+            'email' => $request['email'],
+            'address' => $request['address'],
+            'phone' => $request['phone'],
+            'place_id' => $request['place_id'],
+            'distributor_id' => $distributorId
+        ];
+
+
+        $updatedRows = DB::table('executives')
+        ->where($request['update_item_key'], $request['update_item_value'])
+        ->update($newExecutivesRow);
+
+
+        if ($updatedRows > 0) {
+
+            $responseArr = [
+                'status' => 'success',
+                'error' => false,
+                'message' => 'Successfully updated data in the server.'
+            ];
+        } else {
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true,
+                'message' => 'Data is already upto date in the server'
+            ];
+        }
+
+        return response()->json($responseArr);
+        
+
+    }
+
+
 //tasks---------------------------------------------------------------------------------------- 
+
 
 
     public function task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus = null ){
@@ -397,6 +501,14 @@ class ExecutiveController extends Controller
 
     }
 
+    public function task_getHeaderInfo($request){
+
+        $headerValue = $request->header('user-token');
+
+        $appSecret = config('app.app_secret');
+
+        return JWT::decode($headerValue, new Key($appSecret, 'HS256'));
+    }
 
 
 

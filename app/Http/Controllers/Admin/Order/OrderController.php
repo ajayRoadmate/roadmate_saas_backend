@@ -205,7 +205,124 @@ class OrderController extends Controller
 
     }
 
+    public function distributor_fetchAllOrderTableData(Request $request){
+         
+        $tableColumns = ['b2b_orders.id as order_id', 'b2b_orders.order_date', 'b2b_orders.b2b_order_status as order_status', 'b2b_orders.total_amount', 'b2b_orders.discount', 'shops.shop_name', 'distributors.distributor_name', 'executives.executive_name'];
+        $searchFields = ['b2b_orders.id'];
+
+        $table = DB::table('b2b_orders')
+        ->leftJoin('shops', 'b2b_orders.shop_id', '=', 'shops.id')
+        ->leftJoin('distributors', 'b2b_orders.distributor_id', '=', 'distributors.id')
+        ->leftJoin('executives','b2b_orders.executive_id', '=', 'executives.id')
+        ->select(
+            'b2b_orders.id as order_id',
+            'b2b_orders.order_date',
+            'b2b_orders.total_amount',
+            'b2b_orders.discount',
+            'shops.shop_name',
+            'distributors.distributor_name',
+            'executives.executive_name',
+            DB::raw("
+                CASE 
+                    WHEN b2b_orders.b2b_order_status = 0 THEN 'Pending'
+                    WHEN b2b_orders.b2b_order_status = 1 THEN 'Confirmed'
+                    WHEN b2b_orders.b2b_order_status = 2 THEN 'Shipped'
+                    WHEN b2b_orders.b2b_order_status = 3 THEN 'Delivered'
+                    WHEN b2b_orders.b2b_order_status = 4 THEN 'Canceled'
+                    WHEN b2b_orders.b2b_order_status = 5 THEN 'Returned'
+                    ELSE 'Inactive'
+                END AS order_status
+            ")
+        )
+        ->where('b2b_orders.b2b_order_status', '!=',  4);
+
+        //0-pending,1-confirmed , 2-shipped,3-delivered ,4- cancel,5 -return
+
+        return $this->task_queryTableData($table, $tableColumns, $searchFields, $request);
     
+    }
+
+    public function distributor_updateOrder(Request $request){
+
+        $request->validate([
+            'discount' => 'required|numeric',
+            'b2b_order_status' => 'required|integer',
+            'update_item_key' => 'required',
+            'update_item_value' => 'required'
+        ]);
+
+
+        $newOrderRow = [
+            'discount' => $request['discount'],
+            'b2b_order_status' => $request['b2b_order_status']
+        ];
+
+        $updatedRows = DB::table('b2b_orders')
+        ->where($request['update_item_key'], $request['update_item_value'])
+        ->update($newOrderRow);
+
+
+        if ($updatedRows > 0) {
+
+            $responseArr = [
+                'status' => 'success',
+                'error' => false,
+                'message' => 'Successfully updated data in the server.'
+            ];
+        } else {
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true,
+                'message' => 'Data is already upto date in the server'
+            ];
+        }
+
+        return response()->json($responseArr);
+        
+
+    }
+
+    public function distributor_cancelOrder(Request $request){
+
+        $request->validate([
+            'item_key' => 'required',
+            'item_value' => 'required'
+        ]);
+
+        $orderId = $request['item_value'];
+
+        $orderMasterCancelStatus = 4;
+
+        $masterTableUpdate = DB::table('b2b_orders')
+        ->where('id',$orderId)
+        ->update(['b2b_order_status'=> $orderMasterCancelStatus]);
+         
+        $orderDetailsTableUpdate = DB::table('b2b_order_details')
+        ->where('order_master_id',$orderId)
+        ->update(['b2b_order_details_status' => 0]);
+         
+        if ( ($masterTableUpdate > 0) && ($orderDetailsTableUpdate > 0) ) {
+
+            $responseArr = [
+                'status' => 'success',
+                'error' => false,
+                'message' => 'Successfully deleted data in the server.'
+            ];
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true,
+                'message' => 'There was and error while deleting data form the server.'
+            ];
+        }
+
+        return response()->json($responseArr);
+        
+
+    }
 
 
 //tasks---------------------------------------------------------------------------------------- 
