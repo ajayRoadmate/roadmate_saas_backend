@@ -101,7 +101,7 @@ Route::get('distributor_fetchAllOrderTableData', [OrderController::class, 'distr
 Route::post('distributor_updateOrder', [OrderController::class, 'distributor_updateOrder']);
 Route::get('distributor_cancelOrder', [OrderController::class, 'distributor_cancelOrder']);
 
-Route::get('distributor_info', [DistributorController::class, 'distributor_info']);
+Route::get('distributor_fetchInfo', [DistributorController::class, 'distributor_fetchInfo']);
 
 
 

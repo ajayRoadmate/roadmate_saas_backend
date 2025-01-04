@@ -164,7 +164,8 @@ class DistributorController extends Controller
 
     }
 
-    public function  distributor_info(Request $request) {
+    public function  distributor_fetchInfo(Request $request) {
+
 
         $currentDate = Carbon::now()->toDateTimeString();
 
