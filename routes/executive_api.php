@@ -32,4 +32,5 @@ Route::middleware([ValidateToken::class])->group(function () {
     Route::post('fetchShopNotes', [ExecutiveController::class, 'fetchShopNotes']);
     Route::post('createShopNote', [ExecutiveController::class, 'createShopNote']);
     Route::post('updateShopNote', [ExecutiveController::class, 'updateShopNote']);
+    Route::post('executiveSalesChart', [ExecutiveController::class, 'executiveSalesChart']);
 });

@@ -792,4 +792,49 @@ class ExecutiveController extends Controller
             return handleCustomError("Failed to update the shop's note.");
         }
     }
+
+    public function executiveSalesChart(Request $request)
+    {
+
+        $request->validate([
+            'executive_id' => 'required|integer',
+        ]);
+
+        $executiveId = $request->executive_id;
+
+        $salesArr = DB::table('b2b_orders')
+            ->select(
+                'order_date as date',
+                DB::raw('SUM(total_amount) as amount')
+            )
+            ->where('executive_id', $executiveId)
+            ->where('order_date', '>=', Carbon::now()->subDays(7))
+            ->whereNotIn('b2b_order_status', [4, 5])
+            ->groupBy('date')
+            ->orderBy('date', 'desc')
+            ->get();
+
+
+        if ($salesArr->isNotEmpty()) {
+
+            $salesData = [];
+            foreach ($salesArr as $sale) {
+                $salesData[$sale->date] =  (float)$sale->amount;
+            }
+
+            $sales = [];
+            for ($i = 0; $i <= 6; $i++) {
+                $date = Carbon::now()->subDays($i)->format('Y-m-d');
+                $sales[] = [
+                    'date' => $date,
+                    'amount' => $salesData[$date] ?? 0
+                ];
+            }
+
+            return handleSuccess('Successfully got data from the server', $sales);
+        } else {
+
+            return handleError('DATA_NOT_FOUND');
+        }
+    }
 }
