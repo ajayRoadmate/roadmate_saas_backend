@@ -142,7 +142,7 @@ return [
 
 
     'admin' => [
-        'PHONE_NUMBER' => 1234567890,
+        'PHONE_NUMBER' => 7012263580,
         'OTP' => 5252
     ],
 

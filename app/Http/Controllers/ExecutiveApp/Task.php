@@ -415,6 +415,7 @@ class Task
             'executive_id' => $request->executive_id,
             'payment_status' => 0,
             'payment_amount' => 0,
+            'order_note' => $request->order_note,
             'b2b_order_status' => 1
         ];
 
