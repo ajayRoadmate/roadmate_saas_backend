@@ -129,4 +129,17 @@ class SharedController extends Controller
 
         return handleFetchResponse($brandArr);
     }
+    public function appVersion(Request $request)
+    {
+        $request->validate([
+            'apptype' => 'required',
+        ]);
+
+        $appType = $request->apptype;
+
+        $appInfo = DB::table('app_versions')
+            ->where('app_type', $appType)
+            ->get();
+        return handlefetchResponse($appInfo);
+    }
 }
