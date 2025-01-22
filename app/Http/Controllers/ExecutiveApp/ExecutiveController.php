@@ -76,9 +76,17 @@ class ExecutiveController extends Controller
 
                 $executive = DB::table('executives')
                     ->leftjoin('distributors', 'executives.distributor_id', '=', 'distributors.id')
-                    ->select('executives.id', 'executives.executive_name', 'distributors.id as distributor_id', 'distributors.distributor_name')
+                    ->select(
+                        'executives.id',
+                        'executives.executive_name',
+                        'executives.executive_status',
+                        'distributors.id as distributor_id',
+                        'distributors.distributor_name',
+                        'distributors.distributor_status',
+                        DB::raw('NULL as image')
+                    )
                     ->where('executives.phone', $phoneNumber)
-                    ->where('executives.executive_status', 1)
+                    // ->where('executives.executive_status', 1)
                     ->get();
 
                 $responseArr = [
@@ -156,7 +164,7 @@ class ExecutiveController extends Controller
     {
         $request->validate([
             'distributor_id' => 'required|integer|min:1',
-            'phone_number' => 'required|integer',
+            'phone_number' => 'required|integer|digits:10',
         ]);
 
         $phoneNumber = $request->phone_number;
@@ -196,7 +204,7 @@ class ExecutiveController extends Controller
         $request->validate([
             "shop_name" => "required|max:225",
             "description" => "required|max:255",
-            "phone_number" => "required|integer",
+            "phone_number" => "required|integer|digits:10",
             "shop_open_time" => "required",
             "shop_close_time" => "required",
             "shop_type" => "required|integer",
@@ -555,7 +563,7 @@ class ExecutiveController extends Controller
                 'products.product_name',
                 'product_variants.variant_name',
                 'products.distributor_id',
-                'product_Variants.b2b_selling_price',
+                'product_variants.b2b_selling_price',
                 'product_images.image'
             )
             ->where('carts.user_type', $userType)
@@ -612,7 +620,7 @@ class ExecutiveController extends Controller
         $orderId = $request->order_id;
 
         $orderArr = DB::table('b2b_orders')
-            ->leftJoin('b2b_transactions', 'b2b_orders.id', '=', 'b2b_transactions.order_id')
+            ->join('b2b_transactions', 'b2b_orders.id', '=', 'b2b_transactions.order_id')
             ->select(
                 'b2b_orders.id as order_id',
                 'b2b_orders.shop_id',
@@ -626,12 +634,12 @@ class ExecutiveController extends Controller
                 DB::raw('(total_amount - payment_amount) as pending_amount'),
                 'b2b_orders.payment_status',
                 'b2b_orders.b2b_order_status',
-                'b2b_transactions.transction_id',
+                'b2b_transactions.transaction_id',
                 'b2b_transactions.transaction_amount',
                 'b2b_transactions.payment_mode',
                 'b2b_transactions.created_at'
             )
-            ->where('order_id', $orderId)
+            ->where('b2b_orders.id', $orderId)
             ->get();
 
         if ($orderArr->isNotEmpty()) {
@@ -654,7 +662,7 @@ class ExecutiveController extends Controller
                         'txn_date' => $item->created_at,
                         'payment_mode' => $item->payment_mode,
                         'transaction_amount' => $item->transaction_amount,
-                        'transction_id' => $item->transction_id,
+                        'transaction_id' => $item->transaction_id,
                     ];
                 })->toArray()
             ];
