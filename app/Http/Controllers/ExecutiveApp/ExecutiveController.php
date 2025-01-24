@@ -721,8 +721,8 @@ class ExecutiveController extends Controller
     {
 
         $request->validate([
-            'shop_id' => 'required|integer',
-            'distributor_id' => 'required|integer',
+            'shop_id' => 'required|integer|exists:shops,id',
+            'distributor_id' => 'required|integer|exists:distributors,id',
         ]);
         $shopId = $request->shop_id;
         $distributorId = $request->distributor_id;
@@ -742,8 +742,8 @@ class ExecutiveController extends Controller
         $request->validate([
             'shop_id' => 'required|integer|exists:shops,id',
             'notes' => 'required',
-            'distributor_id' => 'required|integer',
-            'executive_id' => 'required|integer',
+            'distributor_id' => 'required|integer|exists:distributors,id',
+            'executive_id' => 'required|integer|exists:executives,id',
 
         ]);
 
