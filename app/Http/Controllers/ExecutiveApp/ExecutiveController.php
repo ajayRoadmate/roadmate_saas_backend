@@ -243,6 +243,39 @@ class ExecutiveController extends Controller
         }
     }
 
+    public function distributorShopMapping(Request $request)
+    {
+        $request->validate([
+            'distributor_id' => 'required|integer|exists:distributors,id',
+            'executive_id' => 'required|integer|exists:executives,id',
+            'shop_id' => 'required|integer|exists:shops,id',
+        ]);
+
+        //check shop already mapped
+        $isMapped = Task::checkIfShopMappedToDistributor($request->shop_id, $request->distributor_id);
+
+        if ($isMapped) {
+
+            return handleCustomError("Shop already mapped to the distributor.");
+        } else {
+
+            $newTableRow = [
+                'distributor_id' => $request->distributor_id,
+                'executive_id' => $request->executive_id,
+                'shop_id' => $request->shop_id,
+
+            ];
+            $newId = DB::table('shops_distributors')->insertGetId($newTableRow);
+            if ($newId) {
+
+                return handleSuccess('Successfully mapped the shop.');
+            } else {
+
+                return handleCustomError("Failed to map shop.");
+            }
+        }
+    }
+
     public function fetchDistributorProducts(Request $request)
     {
         $request->validate([

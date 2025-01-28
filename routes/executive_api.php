@@ -17,6 +17,7 @@ Route::middleware([ValidateToken::class])->group(function () {
     Route::post('fetchDistributorShops', [ExecutiveController::class, 'fetchDistributorShops']);
     Route::post('searchShopByNumber', [ExecutiveController::class, 'searchShopByNumber']);
     Route::post('shopOnboarding', [ExecutiveController::class, 'shopOnboarding']);
+    Route::post('distributorShopMapping', [ExecutiveController::class, 'distributorShopMapping']);
     Route::post('fetchDistributorProducts', [ExecutiveController::class, 'fetchDistributorProducts']);
     Route::post('executivePlaceorder', [ExecutiveController::class, 'executivePlaceorder']);
     Route::post('fetchOrdersByExecutive', [ExecutiveController::class, 'fetchOrdersByExecutive']);
