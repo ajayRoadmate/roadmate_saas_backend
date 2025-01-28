@@ -139,6 +139,14 @@ class ExecutiveController extends Controller
 
         if ($shopArr->isNotEmpty()) {
 
+            $shopArr = $shopArr->map(function ($shop) {
+                $latLong = explode(',', $shop->lat_long);
+                $shop->latitude = $latLong[0] ?? null;
+                $shop->longitude = $latLong[1] ?? null;
+                unset($shop->lat_long);
+                return $shop;
+            });
+
             $totalShops = 0;
             $todayShops = 0;
             $today = Carbon::today();
