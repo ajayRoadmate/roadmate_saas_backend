@@ -130,7 +130,7 @@ class ProductController extends Controller
             $productVariantId = DB::table('product_variants')
             ->insertGetId($newProductVariantRow);
 
-            $imageList = $this->task_uploadFiles($variant['variant_image'], 'images');
+            $imageList = $this->task_uploadFiles($variant['variant_image'], 'img/products');
 
             foreach($imageList as $image){
 
@@ -204,7 +204,7 @@ class ProductController extends Controller
 
                 array_push($testArr, $variant['variant_image']);
 
-                $imageList = $this->task_uploadFiles($variant['variant_image'], 'images');
+                $imageList = $this->task_uploadFiles($variant['variant_image'], 'img/products');
 
                 foreach($imageList as $image){
     
@@ -527,7 +527,7 @@ class ProductController extends Controller
             $productVariantId = DB::table('product_variants')
             ->insertGetId($newProductVariantRow);
 
-            $imageList = $this->task_uploadFiles($variant['variant_image'], 'images');
+            $imageList = $this->task_uploadFiles($variant['variant_image'], 'img/products');
 
             foreach($imageList as $image){
 
@@ -603,7 +603,7 @@ class ProductController extends Controller
 
                 array_push($testArr, $variant['variant_image']);
 
-                $imageList = $this->task_uploadFiles($variant['variant_image'], 'images');
+                $imageList = $this->task_uploadFiles($variant['variant_image'], 'img/products');
 
                 foreach($imageList as $image){
     
