@@ -42,8 +42,7 @@ class Task
         $curl = curl_init();
 
         // $authkey = '293880AcF2Yveev2266449e95P1';
-        $authkey = '293880AGohKEuy6Vl66717195P1'; //new
-
+        $authkey = '293880AGohKEuy6Vl66717195P2'; //new
         $email = 'alwinespylabs@gmail.com';
         $template_id = '64cb55efd6fc05417a720692';
         // $otp = rand(1000,9999);
@@ -338,8 +337,6 @@ class Task
                 'products.id as product_id',
                 'products.product_name',
                 'product_variants.id as variant_id',
-                'product_variants.variant_name',
-                'product_variants.variant_description',
                 'product_variants.unit_id',
                 'units.unit_name',
                 'product_variants.unit_quantity',
