@@ -458,7 +458,7 @@ class ExecutiveController extends Controller
             ->join('product_variants', 'b2b_order_details.product_variant_id', '=', 'product_variants.id')
             ->join('products', 'product_variants.product_id', '=', 'products.id')
             ->leftjoin('units', 'product_variants.unit_id', '=', 'units.id')
-            ->select('b2b_orders.*', 'b2b_order_details.*',  'products.product_name',)
+            ->select('b2b_orders.*', 'b2b_order_details.*',  'products.product_name', 'product_variants.unit_quantity', 'units.*',)
             ->where('b2b_orders.id', $orderId)
             ->get();
 
