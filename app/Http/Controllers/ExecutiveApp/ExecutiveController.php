@@ -138,7 +138,7 @@ class ExecutiveController extends Controller
             ->get();
 
         if ($shopArr->isNotEmpty()) {
-
+            //separate lat and long in different field
             $shopArr = $shopArr->map(function ($shop) {
                 $latLong = explode(',', $shop->lat_long);
                 $shop->latitude = $latLong[0] ?? null;
@@ -457,7 +457,8 @@ class ExecutiveController extends Controller
             ->leftJoin('b2b_order_details', 'b2b_orders.id', '=', 'b2b_order_details.order_master_id')
             ->join('product_variants', 'b2b_order_details.product_variant_id', '=', 'product_variants.id')
             ->join('products', 'product_variants.product_id', '=', 'products.id')
-            ->select('b2b_orders.*', 'b2b_order_details.*', 'product_variants.variant_name', 'products.product_name',)
+            ->leftjoin('units', 'product_variants.unit_id', '=', 'units.id')
+            ->select('b2b_orders.*', 'b2b_order_details.*',  'products.product_name', 'product_variants.unit_quantity', 'units.*',)
             ->where('b2b_orders.id', $orderId)
             ->get();
 
@@ -478,12 +479,14 @@ class ExecutiveController extends Controller
                     return [
                         'product_id' => $item->product_id,
                         'product_variant_id' => $item->product_variant_id,
+                        'product_name' => $item->product_name,
+                        'unit_quantity' => $item->unit_quantity,
+                        'unit_name' => $item->unit_name,
+                        'unit_abbreviation' => $item->unit_abbreviation,
                         'quantity' => $item->quantity,
                         'purchase_price' => $item->purchase_price,
                         'mrp' => $item->mrp,
                         'selling_price' => $item->selling_price,
-                        'product_name' => $item->product_name,
-                        'variant_name' => $item->variant_name,
                         'product_order_status' => $item->b2b_order_details_status,
                         'image' => Task::fetchProductImage($item->product_variant_id),
                     ];
@@ -591,6 +594,7 @@ class ExecutiveController extends Controller
         $cartArr = DB::table('carts')
             ->join('product_variants', 'carts.product_variant_id', '=', 'product_variants.id')
             ->join('products', 'product_variants.product_id', '=', 'products.id')
+            ->leftjoin('units', 'product_variants.unit_id', '=', 'units.id')
             ->leftJoin('product_images', function ($join) {
                 $join->on('product_variants.id', '=', 'product_images.product_variant_id')
                     ->where('product_images.product_image_status', '=', 1);
@@ -602,7 +606,9 @@ class ExecutiveController extends Controller
                 'carts.product_variant_id',
                 'carts.quantity',
                 'products.product_name',
-                'product_variants.variant_name',
+                'product_variants.unit_quantity',
+                'units.unit_name',
+                'units.unit_abbreviation',
                 'products.distributor_id',
                 'product_variants.b2b_selling_price',
                 'product_images.image'
