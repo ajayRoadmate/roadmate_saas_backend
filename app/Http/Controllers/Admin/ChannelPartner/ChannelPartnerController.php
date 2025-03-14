@@ -24,7 +24,20 @@ class ChannelPartnerController extends Controller
             'gst_number' => 'nullable|string'
         ]);
 
+        $newUserRow = [
+            'name' => $request['channel_partner_name'],
+            'user_type' => 4,
+            'email' => $request['email'],
+            'phone' => $request['phone'],
+            'password' => $request['password'],
+            'user_token' => 'initial'
+        ];
+
+        $userId = DB::table('roadmate_users')
+        ->insertGetId($newUserRow);
+
         $newChannelPartnersRow = [
+            'user_id' => $userId,
             'channel_partner_name' => $request['channel_partner_name'],
             'address' => $request['address'],
             'phone' => $request['phone'],
@@ -193,7 +206,44 @@ class ChannelPartnerController extends Controller
 
     }
 
-    
+    public function admin_deleteChannelPartner(Request $request){
+
+        $request->validate([
+            'item_key' => 'required',
+            'item_value' => 'required'
+        ]);
+
+        $IN_ACTIVE_STATUS = 0;
+        $newChannelPartnerRow = [
+            'channel_partner_status' => $IN_ACTIVE_STATUS
+        ];
+
+        $updatedRows = DB::table('channel_partners')
+        ->where($request['item_key'],$request['item_value'])
+        ->update($newChannelPartnerRow);
+
+
+        if($updatedRows > 0){
+
+            $responseArr = [
+                'status' => 'success',
+                'error' => false,
+                'message' => 'Successfully deleted the distributor'
+            ];
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true,
+                'message' => 'Failed to delete distributor.'
+            ];
+        }
+
+        return response()->json($responseArr);
+
+    }
+
 
 
     //tasks---------------------------------------------------------------------------------------- 
