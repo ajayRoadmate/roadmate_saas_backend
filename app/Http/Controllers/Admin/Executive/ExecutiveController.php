@@ -58,7 +58,6 @@ class ExecutiveController extends Controller
             'distributor_id' => 'required|integer',
         ]);
 
-        $executiveToken = "test token";
 
         $newExecutivesRow = [
             'executive_name' => $request['executive_name'],
@@ -157,8 +156,6 @@ class ExecutiveController extends Controller
             'update_item_key' => 'required',
             'update_item_value' => 'required'
         ]);
-
-        $executiveToken = "test token";
 
         $newExecutivesRow = [
             'executive_name' => $request['executive_name'],

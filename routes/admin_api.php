@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\Subscription\SubscriptionController;
 use App\Http\Controllers\Admin\Shop\ShopController;
 use App\Http\Controllers\Admin\Order\OrderController;
 use App\Http\Controllers\Admin\Product\ProductController;
+use App\Http\Controllers\Admin\SharedModule\SharedModuleController;
 
 
 
@@ -18,6 +19,7 @@ Route::get('fetchDistrictFilterData', [DistributorController::class, 'fetchDistr
 Route::get('fetchPlaceFilterData', [DistributorController::class, 'fetchPlaceFilterData']);
 Route::get('fetchPlaceTypeFilterData', [DistributorController::class, 'fetchPlaceTypeFilterData']);
 
+Route::post('Login', [SharedModuleController::class, 'Login']);
 
 
 // distributor module
@@ -30,6 +32,8 @@ Route::get('deleteDistributor', [DistributorController::class, 'deleteDistributo
 Route::post('testAdminLogin', [DistributorController::class, 'testAdminLogin']);
 Route::post('testDistributorLogin', [DistributorController::class, 'testDistributorLogin']);
 Route::post('testChannelPartnerLogin', [DistributorController::class, 'testChannelPartnerLogin']);
+Route::post('admin_createDistributor', [DistributorController::class, 'admin_createDistributor']);
+Route::get('fetchChannelPartnerFilterData', [DistributorController::class, 'fetchChannelPartnerFilterData']);
 
 
 

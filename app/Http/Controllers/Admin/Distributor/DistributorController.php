@@ -62,6 +62,56 @@ class DistributorController extends Controller
         
     }
 
+    public function admin_createDistributor(Request $request){
+
+        $request->validate([
+            'distributor_name' => 'required|string',
+            'address' => 'required|string',
+            'phone' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|string',
+            'place_id' => 'required|integer',
+            'channel_partner_id' => 'required'
+        ]);
+
+        $newUserRow = [
+            'name' => $request['distributor_name'],
+            'user_type' => 3,
+            'email' => $request['email'],
+            'phone' => $request['phone'],
+            'password' => $request['password'],
+            'user_token' => 'initial'
+        ];
+
+        $userId = DB::table('roadmate_users')
+        ->insertGetId($newUserRow);
+        
+        $newDistributorsRow = [
+            'user_id' => $userId,
+            'channel_partner_id' => $request['channel_partner_id'],
+            'distributor_name' => $request['distributor_name'],
+            'address' => $request['address'],
+            'phone' => $request['phone'],
+            'email' => $request['email'],
+            'password' => $request['password'],
+            'place_id' => $request['place_id'],
+            'gst_number' => $request['gst_number']
+        ];
+
+        
+        DB::table('distributors')
+        ->insert($newDistributorsRow);
+
+        $responseArr = [
+            'status' => 'success',
+            'message' => 'Successfully inserted data into the server.'
+        ];
+
+        return response()->json($responseArr);
+        
+    }
+
+
     public function  fetchCountryFilterData(Request $request) {
 
         $data = DB::table('countries')
@@ -165,6 +215,36 @@ class DistributorController extends Controller
 
     }
 
+    public function fetchChannelPartnerFilterData(Request $request){
+
+        $filterData = DB::table('channel_partners')
+        ->select('channel_partners.id as filter_value', 'channel_partners.channel_partner_name as filter_display_value')
+        ->where('channel_partner_status',1)
+        ->get();
+
+        if($filterData->isNotEmpty()){
+
+            $responseArr = [
+                'status' => 'success',
+                'message' => 'Successfully added product into the database.',
+                'payload' => $filterData
+            ];
+    
+            return response($responseArr);
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'message' => 'Failed to fetch data form the server',
+                'payload' => $filterData
+            ];
+    
+            return response($responseArr);
+        }
+        
+    }
+
     public function  distributor_fetchInfo(Request $request) {
 
 
@@ -177,18 +257,12 @@ class DistributorController extends Controller
         ->leftJoin('places','distributors.place_id','=','places.id')
         ->leftJoin('districts','places.district_id','=','districts.id')
         ->leftJoin('states','districts.state_id','=','states.id')
-        ->leftJoin('distributor_subscrption', 'distributors.id', 'distributor_subscrption.distributor_id' )
-        ->leftJoin('saas_subscriptions', 'distributor_subscrption.subscription_id', 'saas_subscriptions.id')
         ->where('distributors.id',$distributorId)
-        ->where('distributor_subscrption.valid_from', '<=', $currentDate)
-        ->where('distributor_subscrption.valid_to', '>=', $currentDate)
         ->select(
             'distributors.distributor_name',
             'distributors.address',
             'distributors.email',
-            'distributors.phone',
-            'distributors.password',
-            'saas_subscriptions.subscription_name'
+            'distributors.phone'
         )
         ->get()
         ->first();
@@ -204,7 +278,7 @@ class DistributorController extends Controller
         else{
 
             $responseArr = [
-                'status' => 'success',
+                'status' => 'failed',
                 'message' => 'Failed to get data from the server.',
                 'payload' => $data
             ];
@@ -213,6 +287,9 @@ class DistributorController extends Controller
         return response()->json($responseArr);
 
     }
+
+
+
 
     //distributer api----------------------------------------------------------------
 
@@ -243,6 +320,7 @@ class DistributorController extends Controller
         ->leftJoin('states','districts.state_id','=','states.id')
         ->where($request['item_key'],$request['item_value'])
         ->select(
+            'distributors.channel_partner_id',
             'distributors.distributor_name',
             'distributors.address',
             'distributors.email',
@@ -269,7 +347,7 @@ class DistributorController extends Controller
         else{
 
             $responseArr = [
-                'status' => 'success',
+                'status' => 'failed',
                 'message' => 'Failed to get data from the server.',
                 'payload' => $data
             ];
@@ -287,6 +365,7 @@ class DistributorController extends Controller
             'phone' => 'required|string',
             'email' => 'required|email',
             'password' => 'required|string',
+            'channel_partner_id' => 'required',
             'place_id' => 'required|integer',
             'update_item_key' => 'required',
             'update_item_value' => 'required'
@@ -299,6 +378,7 @@ class DistributorController extends Controller
             'phone' => $request['phone'],
             'email' => $request['email'],
             'password' => $request['password'],
+            'channel_partner_id' => $request['channel_partner_id'],
             'place_id' => $request['place_id'],
             'gst_number' =>$request['gst_number']
         ];
@@ -472,7 +552,7 @@ class DistributorController extends Controller
             'email' => $request['email'],
             'phone' => $request['phone'],
             'password' => $request['password'],
-            'user_token' => 'test token'
+            'user_token' => 'initial'
         ];
 
         $userId = DB::table('roadmate_users')
@@ -492,7 +572,8 @@ class DistributorController extends Controller
             'gst_number' => $request['gst_number'],
             'channel_partner_id' => $channelPartnerId
         ];
-        
+
+
         DB::table('distributors')
         ->insert($newDistributorsRow);
 
