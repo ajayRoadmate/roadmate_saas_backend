@@ -219,7 +219,35 @@ class ShopController extends Controller
         return JWT::decode($headerValue, new Key($appSecret, 'HS256'));
     }
 
+    public function handleError($errorName){
 
+        $errorCodes = config('app.error_codes');
+
+        if(isset($errorCodes[$errorName])){
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true, 
+                'error_code' => $errorCodes[$errorName]['code'],
+                'message' => $errorCodes[$errorName]['message']
+            ];
+
+            return response()->json($responseArr);
+
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true, 
+                'error_code' => $errorCodes['UNKNOWN_ERROR']['code'],
+                'message' => $errorCodes['UNKNOWN_ERROR']['message']
+            ];
+
+            return response()->json($responseArr);
+        }
+
+    }
 
 
 }
