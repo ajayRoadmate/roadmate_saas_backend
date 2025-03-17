@@ -88,6 +88,11 @@ Route::get('admin_fetchProductUpdateFormData', [ProductController::class, 'admin
 Route::post('admin_updateProduct', [ProductController::class, 'admin_updateProduct']);
 Route::get('admin_fetchProductDetailsTableData', [ProductController::class, 'admin_fetchProductDetailsTableData']);
 
+Route::get('distributor_fetchBrandTableData', [ProductController::class, 'distributor_fetchBrandTableData']);
+Route::get('distributor_deleteBrand', [ProductController::class, 'distributor_deleteBrand']);
+Route::post('distributor_createBrand', [ProductController::class, 'distributor_createBrand']);
+Route::get('distributor_fetchBrandUpdateFormData', [ProductController::class, 'distributor_fetchBrandUpdateFormData']);
+Route::post('distributor_updateBrand', [ProductController::class, 'distributor_updateBrand']);
 
 
 //distributor dashboard
