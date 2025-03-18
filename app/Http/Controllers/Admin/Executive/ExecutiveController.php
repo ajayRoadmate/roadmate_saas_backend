@@ -58,7 +58,6 @@ class ExecutiveController extends Controller
             'distributor_id' => 'required|integer',
         ]);
 
-        $executiveToken = "test token";
 
         $newExecutivesRow = [
             'executive_name' => $request['executive_name'],
@@ -157,8 +156,6 @@ class ExecutiveController extends Controller
             'update_item_key' => 'required',
             'update_item_value' => 'required'
         ]);
-
-        $executiveToken = "test token";
 
         $newExecutivesRow = [
             'executive_name' => $request['executive_name'],
@@ -508,6 +505,36 @@ class ExecutiveController extends Controller
         $appSecret = config('app.app_secret');
 
         return JWT::decode($headerValue, new Key($appSecret, 'HS256'));
+    }
+
+    public function handleError($errorName){
+
+        $errorCodes = config('app.error_codes');
+
+        if(isset($errorCodes[$errorName])){
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true, 
+                'error_code' => $errorCodes[$errorName]['code'],
+                'message' => $errorCodes[$errorName]['message']
+            ];
+
+            return response()->json($responseArr);
+
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true, 
+                'error_code' => $errorCodes['UNKNOWN_ERROR']['code'],
+                'message' => $errorCodes['UNKNOWN_ERROR']['message']
+            ];
+
+            return response()->json($responseArr);
+        }
+
     }
 
 

@@ -1,176 +1,166 @@
 <?php
 
-namespace App\Http\Controllers\Admin\Subscription;
+namespace App\Http\Controllers\Admin\SharedModule;
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller; 
 use Illuminate\Support\Facades\DB;
+use Firebase\JWT\JWT;
+use Firebase\JWT\Key;
 
-class SubscriptionController extends Controller
+
+class SharedModuleController extends Controller
 {
 
-    public function admin_createSubscription(Request $request){
 
-        $request->validate([
-            'subscription_name' => 'required|string',
-            'description' => 'required|string',
-            'validity' => 'required|integer',
-            'subscription_price' => 'required|numeric|min:0',
-        ]);
+    public function Login(Request $request){
 
-        $newSaasSubscriptionsRow = [
-            'subscription_name' => $request['subscription_name'],
-            'description' => $request['description'],
-            'validity' => $request['validity'],
-            'subscription_price' => $request['subscription_price']
-        ];
-
-        DB::table('saas_subscriptions')
-        ->insert($newSaasSubscriptionsRow);
-
-        $responseArr = [
-            'status' => 'success',
-            'message' => 'Successfully added subscription in the database.'
-        ];
-
-        return response()->json($responseArr);
-    }
-
-    public function admin_fetchSubscriptionTableData(Request $request){
-
-        $tableColumns = ['saas_subscriptions.id as subscription_id', 'saas_subscriptions.subscription_name', 'saas_subscriptions.description', 'saas_subscriptions.validity', 'saas_subscriptions.subscription_price'];
-        $searchFields = ['saas_subscriptions.id','saas_subscriptions.subscription_name'];
-        $itemStatus = ['status_column' => 'saas_subscriptions.subscription_status', 'status_value' => 1];
-         
-        $table = DB::table('saas_subscriptions')
-        ->select( 'saas_subscriptions.id as subscription_id', 'saas_subscriptions.subscription_name', 'saas_subscriptions.description', 'saas_subscriptions.validity', 'saas_subscriptions.subscription_price');
-
-        return $this->task_queryTableData($table, $tableColumns, $searchFields, $request, $itemStatus);
-
-    }
-
-    public function admin_fetchSubscriptionUpdateFormData(Request $request){
-
-        $request->validate([
-            'item_key' => 'required',
-            'item_value' => 'required'
-        ]);
-
-        $data = DB::table('saas_subscriptions')
-        ->where($request['item_key'],$request['item_value'])
-        ->select(
-            'saas_subscriptions.subscription_name',
-            'saas_subscriptions.description',
-            'saas_subscriptions.validity',
-            'saas_subscriptions.subscription_price'
-        )
+        $userInfo = DB::table('roadmate_users')
+        ->where('phone',$request['phone'])
         ->get()
         ->first();
 
-        if($data){
+        if($userInfo){
 
-            $responseArr = [
-                'status' => 'success',
-                'message' => 'Successfully got data from the server.',
-                'payload' => $data
-            ];
+            $remotePassword = $userInfo->password;
+            $userPassword = $request['password'];
+    
+            if($remotePassword == $userPassword){
+
+                $userToken = $this->getUserToken($userInfo);
+
+                if($userToken){
+
+                    $this->storeUserToken($userToken,$userInfo->id);
+
+                    return response()->json([
+                        'status' => 'success',
+                        'message' => 'Successfully loggedin',
+                        'user_token' => $userToken
+                    ]);
+
+                }
+                else{
+
+                    return response()->json([
+                        'status' => 'failed',
+                        'message' => 'Failed to login, Could not generate user token.'
+                    ]);
+                }
+    
+            }
+            else{
+    
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to login, Password is invalid.'
+                ]);
+            }
+            
         }
         else{
 
-            $responseArr = [
-                'status' => 'success',
-                'message' => 'Failed to get data from the server.',
-                'payload' => $data
-            ];
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Failed to login, Phone number invalid.'
+            ]);
         }
 
-        return response()->json($responseArr);
+    }
+
+    function storeUserToken($userToken,$userId){
+
+        $userArr = [
+            'user_token' => $userToken
+        ];
+
+        DB::table('roadmate_users')
+        ->where('id',$userId)
+        ->update($userArr);
+
+    }
+
+    function getUserToken($userInfo){
+
+        if($userInfo->user_type == 1){
+
+            $appSecret = config('app.app_secret');
         
-    }
-
-    public function admin_updateSubscription(Request $request){
-
-        $request->validate([
-            'subscription_name' => 'required|string',
-            'description' => 'required|string',
-            'validity' => 'required|integer',
-            'subscription_price' => 'required|numeric|min:0',
-            'update_item_key' => 'required',
-            'update_item_value' => 'required'
-        ]);
-
-        $newSaasSubscriptionsRow = [
-            'subscription_name' => $request['subscription_name'],
-            'description' => $request['description'],
-            'validity' => $request['validity'],
-            'subscription_price' => $request['subscription_price']
-        ];
-
-
-        $updatedRows = DB::table('saas_subscriptions')
-        ->where($request['update_item_key'], $request['update_item_value'])
-        ->update($newSaasSubscriptionsRow);
-
-
-        if ($updatedRows > 0) {
-
-            $responseArr = [
-                'status' => 'success',
-                'error' => false,
-                'message' => 'Successfully updated data in the server.'
+            $payload = [
+                'iss' => 'roadMate',  
+                'iat' => time(),
+                'userId' => $userInfo->id,   
+                'userType' => $userInfo->user_type
             ];
-        } else {
+            
+            $userToken = JWT::encode($payload, $appSecret, 'HS256');
+            return $userToken;
 
-            $responseArr = [
-                'status' => 'failed',
-                'error' => true,
-                'message' => 'Data is already upto date in the server'
-            ];
         }
+        else if($userInfo->user_type == 2){
 
-        return response()->json($responseArr);
-
-    }
-
-    public function admin_deleteSubscription(Request $request){
-
-        $request->validate([
-            'item_key' => 'required',
-            'item_value' => 'required'
-        ]);
-
-        $IN_ACTIVE_STATUS = 0;
-        $newSubscriptionRow = [
-            'subscription_status' => $IN_ACTIVE_STATUS
-        ];
-
-        $updatedRows = DB::table("saas_subscriptions")
-        ->where($request['item_key'], $request['item_value'])
-        ->update($newSubscriptionRow);
-
-        if ($updatedRows > 0) {
-
-            $responseArr = [
-                'status' => 'success',
-                'error' => false,
-                'message' => 'Successfully deleted the subscription.'
+            $appSecret = config('app.app_secret');
+        
+            $payload = [
+                'iss' => 'roadMate',  
+                'iat' => time(),
+                'userId' => $userInfo->id,   
+                'userType' => $userInfo->user_type
             ];
-        } else {
+            
+            $userToken = JWT::encode($payload, $appSecret, 'HS256');
+            return $userToken;
 
-            $responseArr = [
-                'status' => 'failed',
-                'error' => true,
-                'message' => 'Data is already deleted'
-            ];
         }
+        else if($userInfo->user_type == 3){
 
-        return response()->json($responseArr);
+            $appSecret = config('app.app_secret');
 
+            $distributorInfo = DB::table('distributors')
+            ->where('user_id',$userInfo->id)
+            ->get()
+            ->first();
+        
+            $payload = [
+                'iss' => 'roadMate',  
+                'iat' => time(),
+                'userId' => $userInfo->id,   
+                'userType' => $userInfo->user_type,
+                'distributorId' => $distributorInfo->id
+            ];
+            
+            $userToken = JWT::encode($payload, $appSecret, 'HS256');
+            return $userToken;
+
+        }  
+        else if($userInfo->user_type == 4){
+
+            $appSecret = config('app.app_secret');
+
+            $channelPartnerInfo = DB::table('channel_partners')
+            ->where('user_id',$userInfo->id)
+            ->get()
+            ->first();
+        
+            $payload = [
+                'iss' => 'roadMate',  
+                'iat' => time(),
+                'userId' => $userInfo->id,   
+                'userType' => $userInfo->user_type,
+                'channelPartnerId' => $channelPartnerInfo->id
+            ];
+            
+            $userToken = JWT::encode($payload, $appSecret, 'HS256');
+            return $userToken;
+
+        }           
+        else{
+            return '';
+        }
     }
 
 
 
-    
     //tasks---------------------------------------------------------------------------------------- 
 
 
@@ -338,6 +328,15 @@ class SubscriptionController extends Controller
 
     }
 
+    public function task_getHeaderInfo($request){
+
+        $headerValue = $request->header('user-token');
+
+        $appSecret = config('app.app_secret');
+
+        return JWT::decode($headerValue, new Key($appSecret, 'HS256'));
+    }
+
     public function handleError($errorName){
 
         $errorCodes = config('app.error_codes');
@@ -370,3 +369,7 @@ class SubscriptionController extends Controller
 
 
 }
+
+
+
+

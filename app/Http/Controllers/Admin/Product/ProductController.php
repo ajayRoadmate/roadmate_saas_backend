@@ -632,6 +632,150 @@ class ProductController extends Controller
     
     }
 
+    public function distributor_fetchBrandTableData(Request $request){
+
+        $tableColumns = ['brands.id as brand_id', 'brands.brand_name'];
+        $searchFields = ['brands.id','brands.brand_name'];
+
+        $table = DB::table('brands')
+        ->select($tableColumns)
+        ->where('brand_status',1);
+
+        return $this->task_queryTableData($table, $tableColumns, $searchFields, $request);
+    }
+
+    public function distributor_deleteBrand(Request $request){
+        
+        $request->validate([
+            'item_key' => 'required',
+            'item_value' => 'required'
+        ]);
+
+        $IN_ACTIVE_STATUS = 0;
+        $newBrandsRow = [
+            'brand_status' => $IN_ACTIVE_STATUS
+        ];
+
+        $updatedRows = DB::table('brands')
+        ->where($request['item_key'],$request['item_value'])
+        ->update($newBrandsRow);
+
+
+        if($updatedRows > 0){
+
+            $responseArr = [
+                'status' => 'success',
+                'error' => false,
+                'message' => 'Successfully deleted the brand'
+            ];
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true,
+                'message' => 'Failed to delete brand.'
+            ];
+        }
+
+        return response()->json($responseArr);
+        
+    }
+
+    public function distributor_createBrand(Request $request){
+
+        $request->validate([
+            'brand_name' => 'required|string'
+        ]);
+
+        $newBrandsRow = [
+            'brand_name' => $request['brand_name']
+        ];
+
+        DB::table('brands')
+        ->insert($newBrandsRow);
+
+        $responseArr = [
+            'status' => 'success',
+            'message' => 'Successfully added executive in the database.'
+        ];
+
+        return response()->json($responseArr);
+    }
+
+    public function distributor_fetchBrandUpdateFormData(Request $request){
+
+        $request->validate([
+            'item_key' => 'required',
+            'item_value' => 'required'
+        ]);
+
+
+        $data = DB::table('brands')
+        ->where($request['item_key'],$request['item_value'])
+        ->select(
+            'brands.brand_name'
+        )
+        ->get()
+        ->first();
+
+        if($data){
+
+            $responseArr = [
+                'status' => 'success',
+                'message' => 'Successfully got data from the server.',
+                'payload' => $data
+            ];
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'success',
+                'message' => 'Failed to get data from the server.',
+                'payload' => $data
+            ];
+        }
+
+        return response()->json($responseArr);
+
+    }
+
+    public function distributor_updateBrand(Request $request){
+
+        $request->validate([
+            'brand_name' => 'required|string',
+            'update_item_key' => 'required',
+            'update_item_value' => 'required'
+        ]);
+
+        $newBrandsRow = [
+            'brand_name' => $request['brand_name']
+        ];
+
+        $updatedRows = DB::table('brands')
+        ->where($request['update_item_key'], $request['update_item_value'])
+        ->update($newBrandsRow);
+
+
+        if ($updatedRows > 0) {
+
+            $responseArr = [
+                'status' => 'success',
+                'error' => false,
+                'message' => 'Successfully updated data in the server.'
+            ];
+        } else {
+
+            $responseArr = [
+                'status' => 'failed',
+                'error' => true,
+                'message' => 'Data is already upto date in the server'
+            ];
+        }
+
+        return response()->json($responseArr);
+    }
+
 
 //tasks---------------------------------------------------------------------------------------- 
 
