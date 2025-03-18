@@ -353,14 +353,14 @@ class ExecutiveController extends Controller
             $orderId = Task::createB2BOrder($request);
 
             if (!$orderId) {
-                return handleCustomError("Failed to place new order.");
+                return handleCustomError("Failed to place new order1.");
             }
 
             $orderDetailsCreated = Task::createB2BOrderDetails($request, $orderId);
 
             if (!$orderDetailsCreated) {
 
-                return handleCustomError("Failed to place new order.");
+                return handleCustomError("Failed to place new order2.");
             }
             DB::commit();
 
@@ -375,7 +375,7 @@ class ExecutiveController extends Controller
 
             DB::rollBack();
 
-            return handleCustomError("Failed to place new order.");
+            return handleCustomError($e->getMessage());
         }
     }
 
