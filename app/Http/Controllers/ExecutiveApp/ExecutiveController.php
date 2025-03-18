@@ -908,4 +908,28 @@ class ExecutiveController extends Controller
             return handleError('DATA_NOT_FOUND');
         }
     }
+
+    public function fetchShopDeliveryAddress(Request $request)
+    {
+
+        $request->validate([
+            'shop_id' => 'required|integer|exists:shops,id',
+
+        ]);
+        $shopId = $request->shop_id;
+
+        $deliveryaddressArr = DB::table('shops')
+            ->leftJoin('shop_delivery_addresses', 'shops.id', '=', 'shop_delivery_addresses.shop_id')
+            ->select(
+                'shops.id as shop_id',
+                'shops.shop_name',
+                'shops.phone_primary',
+                'shop_delivery_addresses.delivery_address',
+                'shop_delivery_addresses.pincode',
+            )
+            ->where('shops.id', $shopId)
+            ->get();
+
+        return handlefetchResponse($deliveryaddressArr);
+    }
 }
