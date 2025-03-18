@@ -621,6 +621,7 @@ class ExecutiveController extends Controller
                 'units.unit_abbreviation',
                 'products.distributor_id',
                 'product_variants.mrp',
+                'product_variants.purchase_price',
                 'product_variants.b2b_selling_price',
                 'product_images.image'
             )
