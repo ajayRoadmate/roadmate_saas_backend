@@ -310,13 +310,13 @@ class ExecutiveController extends Controller
         $productArr = $query
             ->offset($offset)
             ->limit($limit)
-            ->get()
-            ->map(function ($item) {
-                $item->mrp = (float) $item->mrp;
-                $item->purchase_price = (float) $item->purchase_price;
-                $item->b2b_selling_price = (float) $item->b2b_selling_price;
-                return $item;
-            });
+            ->get();
+        // ->map(function ($item) {
+        //     $item->mrp = (float) $item->mrp;
+        //     $item->purchase_price = (float) $item->purchase_price;
+        //     $item->b2b_selling_price = (float) $item->b2b_selling_price;
+        //     return $item;
+        // });
 
         $products = [];
         if ($productArr->isNotEmpty()) {
@@ -446,11 +446,11 @@ class ExecutiveController extends Controller
             ->offset($offset)
             ->limit($limit)
             ->orderBy('b2b_orders.id', 'DESC')
-            ->get()
-            ->map(function ($item) {
-                $item->total_amount = (float) $item->total_amount;
-                return $item;
-            });;
+            ->get();
+        // ->map(function ($item) {
+        //     $item->total_amount = (float) $item->total_amount;
+        //     return $item;
+        // });
 
         return handlefetchResponse($orderArr);
     }
@@ -494,9 +494,9 @@ class ExecutiveController extends Controller
                         'unit_name' => $item->unit_name,
                         'unit_abbreviation' => $item->unit_abbreviation,
                         'quantity' => $item->quantity,
-                        'purchase_price' =>  (float)$item->purchase_price,
-                        'mrp' =>  (float)$item->mrp,
-                        'selling_price' =>  (float)$item->selling_price,
+                        'purchase_price' => $item->purchase_price,
+                        'mrp' =>  $item->mrp,
+                        'selling_price' =>  $item->selling_price,
                         'product_order_status' => $item->b2b_order_details_status,
                         'image' => Task::fetchProductImage($item->product_variant_id),
                     ];
@@ -630,12 +630,12 @@ class ExecutiveController extends Controller
             ->where('product_variants.b2b_status', 1)
             ->where('product_variants.approve_status', 1)
             ->groupBy('product_variants.id')
-            ->get()
-            ->map(function ($item) {
-                $item->mrp = (float) $item->mrp;
-                $item->b2b_selling_price = (float) $item->b2b_selling_price;
-                return $item;
-            });
+            ->get();
+        // ->map(function ($item) {
+        //     $item->mrp = (float) $item->mrp;
+        //     $item->b2b_selling_price = (float) $item->b2b_selling_price;
+        //     return $item;
+        // });
 
         return handlefetchResponse($cartArr);
     }
