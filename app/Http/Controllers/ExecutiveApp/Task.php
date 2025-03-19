@@ -8,6 +8,7 @@ use Firebase\JWT\Key;
 use Illuminate\Http\Request;
 use App\Services\HttpApiService;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Intervention\Image\Laravel\Facades\Image;
 
 class Task
@@ -42,7 +43,7 @@ class Task
         $curl = curl_init();
 
         // $authkey = '293880AcF2Yveev2266449e95P1';
-        $authkey = '293880AGohKEuy6Vl66717195P2'; //new
+        $authkey = '293880AGohKEuy6Vl66717195P1'; //new
         $email = 'alwinespylabs@gmail.com';
         $template_id = '64cb55efd6fc05417a720692';
         // $otp = rand(1000,9999);
