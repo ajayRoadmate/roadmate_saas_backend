@@ -21,6 +21,7 @@ class OrderController extends Controller
         $table = DB::table('b2b_order_details')
         ->leftJoin('products','b2b_order_details.product_id','=','products.id')
         ->leftJoin('product_variants', 'b2b_order_details.product_variant_id', '=', 'product_variants.id')
+        ->where('b2b_order_details.order_master_id', $request['order_id'])
         ->select($tableColumns);
 
         return $this->task_queryTableData($table, $tableColumns, $searchFields, $request);
@@ -323,6 +324,110 @@ class OrderController extends Controller
         
 
     }
+
+    public function distributor_cancelOrderProduct(Request $request){
+
+        $request->validate([
+            'item_key' => 'required',
+            'item_value' => 'required'
+        ]);
+
+        //update order_details_status
+
+        $updatedOrderDetailsRow = [
+            'b2b_order_details_status' => 0
+        ];
+
+        $isOrderDetailsUpdated = DB::table('b2b_order_details')
+        ->where($request['item_key'], $request['item_value'])
+        ->update($updatedOrderDetailsRow);
+        
+        if($isOrderDetailsUpdated){
+
+            //update the total amount in orders
+            $orderDetailsRow = DB::table('b2b_order_details')
+            ->where($request['item_key'], $request['item_value'])
+            ->first();
+
+            $orderMasterId = $orderDetailsRow->order_master_id;
+
+            $orderRow = DB::table('b2b_orders')
+            ->where('id',$orderMasterId)
+            ->first();
+
+            $orderDetailsTotal = intval($orderDetailsRow->selling_price * $orderDetailsRow->quantity);
+            $orderTotal = intval($orderRow->total_amount);
+            $newOrderTotal = $orderTotal - $orderDetailsTotal;
+
+            if($newOrderTotal == 0){
+
+                $newOrderRow = [
+                    'total_amount' => 0,
+                    'b2b_order_status' => 4
+                ];
+
+            }
+            else{
+
+                $newOrderRow = [
+                    'total_amount' => $newOrderTotal
+                ];
+            }
+
+            $isOrderUpdated = DB::table('b2b_orders')
+            ->where('id',$orderMasterId)
+            ->update($newOrderRow);
+
+            if($isOrderUpdated){
+
+                return response()->json([
+                    'status' => 'success',
+                    'message' => 'Successfully canceled the item.'
+                ]);
+
+            }
+            else{
+
+                return response()->json([
+                    'status' => 'failed',
+                    'message' => 'Failed to update the data in the server.'
+                ]);
+            }
+
+
+        }
+        else{
+
+            return response()->json([
+                'status' => 'failed',
+                'message' => 'Failed to update the data in the server.'
+            ]);
+        }
+        
+
+
+    }
+
+    public function distributor_fetchOrderDetailsTableData(Request $request){
+
+        $request->validate([
+            'order_id' => 'required'
+        ]);
+         
+        $tableColumns = ['b2b_order_details.id as order_details_id', 'b2b_order_details.order_master_id as order_id', 'products.product_name', 'product_variants.b2b_selling_price', 'product_variants.mrp', 'product_variants.purchase_price'];
+        $searchFields = ['b2b_order_details.id'];
+
+        $table = DB::table('b2b_order_details')
+        ->leftJoin('products','b2b_order_details.product_id','=','products.id')
+        ->leftJoin('product_variants', 'b2b_order_details.product_variant_id', '=', 'product_variants.id')
+        ->where('b2b_order_details.order_master_id', $request['order_id'])
+        ->where('b2b_order_details.b2b_order_details_status',1)
+        ->select($tableColumns);
+
+        return $this->task_queryTableData($table, $tableColumns, $searchFields, $request);
+    
+    }
+
 
 
 //tasks---------------------------------------------------------------------------------------- 

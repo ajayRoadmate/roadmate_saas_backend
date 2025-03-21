@@ -11,6 +11,64 @@ use Firebase\JWT\Key;
 class ShopController extends Controller
 {
 
+    public function testUploadShopImage(Request $request)
+    {
+        // Validate that the file is required and is an image of accepted types
+        $request->validate([
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10000'
+        ]);
+    
+        // Check if the request has a file under 'image'
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            // Create a unique file name with timestamp
+            $imageName = time() . '.' . $image->getClientOriginalExtension();
+            // Define destination path (in the public directory)
+            $destinationPath = public_path('/img/shops');
+            
+            // Move the file to the destination path
+            $image->move($destinationPath, $imageName);
+    
+            // Optionally, you can store the file path or name in your database here
+    
+            return response()->json([
+                'success' => 'Image uploaded successfully',
+                'image'   => $imageName
+            ]);
+        } 
+    
+        return response()->json(['error' => 'No image file found.'], 400);
+    }
+    
+
+    public function task_uploadFiles($fileInput, $storagePath){
+
+
+        if(is_array($fileInput)){
+
+            $files = $fileInput;
+        }
+        else{
+
+            $files = [$fileInput];
+        }
+
+        $uploadedFiles = [];
+
+        foreach ($fileInput as $file) {
+
+            $extension = $file->getClientOriginalExtension();
+            $uniqueFilename = time() . '_' . uniqid() . '.' . $extension;
+
+            $file->move(public_path($storagePath), $uniqueFilename);
+            array_push($uploadedFiles, $uniqueFilename);
+
+        }
+
+        return $uploadedFiles;
+
+    }
+
     public function admin_fetchShopTableData(Request $request){
          
         $tableColumns = ['shops.id as shop_id', 'shops.shop_name', 'shops.address', 'shops.phone_primary'];
@@ -29,17 +87,97 @@ class ShopController extends Controller
         $headerInfo = $this->task_getHeaderInfo($request);
         $distributorId = $headerInfo->distributorId;
 
-        $tableColumns = ['shops_distributors.id as id', 'shops.id as shop_id', 'shops.shop_name', 'shops.address', 'shops.phone_primary'];
+        $tableColumns = ['shops_distributors.id as id', 'shops.id as shop_id', 'shops.shop_name', 'shops.address', 'shops.phone_primary','executives.executive_name', 'executives.phone as executive_phone'];
         $searchFields = ['shops_distributors.id','shops_distributors.shop_name'];
         $itemStatus = ['status_column' => 'shops.shop_status', 'status_value' => 1];
          
         $table = DB::table('shops_distributors')
         ->leftJoin('shops','shops_distributors.shop_id', '=', 'shops.id')
+        ->leftJoin('executives','shops_distributors.executive_id', '=', 'executives.id')
         ->where('shops_distributors.distributor_id', $distributorId)
         ->select($tableColumns);
     
         return $this->task_queryTableData($table, $tableColumns, $searchFields, $request);
         
+    }
+
+    public function distributor_fetchShopUpdateFormData(Request $request){
+
+
+
+        $request->validate([
+            'item_key' => 'required',
+            'item_value' => 'required'
+        ]);
+
+        $data = DB::table('shops')
+        ->where($request['item_key'],$request['item_value'])
+        ->select(
+            'shops.shop_name',
+            'shops.phone_primary',
+            'shops.address'
+        )
+        ->first();
+
+        if($data){
+
+            $responseArr = [
+                'status' => 'success',
+                'message' => 'Successfully got data from the server.',
+                'payload' => $data
+            ];
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'message' => 'Failed to get data from the server.',
+                'payload' => $data
+            ];
+        }
+
+        return response()->json($responseArr);
+
+
+    }
+
+    public function distributor_updateShop(Request $request){
+
+        $request->validate([
+            'update_item_key' => 'required',
+            'update_item_value' => 'required',
+            'shop_name' => 'required',
+            'address' => 'required',
+            'phone_primary' => 'required'
+        ]);
+
+        $newShopsRow = [
+            'shop_name' => $request['shop_name'],
+            'address' => $request['address'],
+            'phone_primary' => $request['phone_primary']
+        ];
+
+        $updatedRows = DB::table('shops')
+        ->where($request['update_item_key'],$request['update_item_value'])
+        ->update($newShopsRow);
+
+        if($updatedRows){
+
+            $responseArr = [
+                'status' => 'success',
+                'message' => 'Successfully updated shop.'
+            ];
+        }
+        else{
+
+            $responseArr = [
+                'status' => 'failed',
+                'message' => 'Shop data already uptodate.'
+            ];
+        }
+
+        return response()->json($responseArr);
+
     }
 
 

@@ -65,6 +65,10 @@ Route::get('admin_deleteSubscription', [SubscriptionController::class, 'admin_de
 
 //shop
 Route::get('admin_fetchShopTableData', [ShopController::class, 'admin_fetchShopTableData']);
+Route::get('distributor_fetchShopUpdateFormData', [ShopController::class, 'distributor_fetchShopUpdateFormData']);
+Route::post('distributor_updateShop', [ShopController::class, 'distributor_updateShop']);
+Route::post('testUploadShopImage', [ShopController::class, 'testUploadShopImage']);
+
 
 //order
 Route::get('admin_fetchAllOrderTableData', [OrderController::class, 'admin_fetchAllOrderTableData']);
@@ -73,6 +77,8 @@ Route::get('admin_fetchOrderStatusFilterData', [OrderController::class, 'admin_f
 Route::post('admin_updateOrder', [OrderController::class, 'admin_updateOrder']);
 Route::get('admin_cancelOrder', [OrderController::class, 'admin_cancelOrder']);
 Route::get('admin_fetchOrderDetailsTableData', [OrderController::class, 'admin_fetchOrderDetailsTableData']);
+Route::get('distributor_fetchOrderDetailsTableData', [OrderController::class, 'distributor_fetchOrderDetailsTableData']);
+Route::get('distributor_cancelOrderProduct', [OrderController::class, 'distributor_cancelOrderProduct']);
 
 
 //product
