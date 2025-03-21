@@ -684,23 +684,36 @@ class ProductController extends Controller
 
     public function distributor_createBrand(Request $request){
 
-        $request->validate([
-            'brand_name' => 'required|string'
-        ]);
+        try{
 
-        $newBrandsRow = [
-            'brand_name' => $request['brand_name']
-        ];
+            $request->validate([
+                'brand_name' => 'required|string|unique:brands,brand_name'
+            ]);
+    
+            $newBrandsRow = [
+                'brand_name' => $request['brand_name']
+            ];
+    
+            DB::table('brands')
+            ->insert($newBrandsRow);
+    
+            $responseArr = [
+                'status' => 'success',
+                'message' => 'Successfully added executive in the database.'
+            ];
+    
+            return response()->json($responseArr);
 
-        DB::table('brands')
-        ->insert($newBrandsRow);
+        } catch (\Exception $e) {
 
-        $responseArr = [
-            'status' => 'success',
-            'message' => 'Successfully added executive in the database.'
-        ];
+            $responseArr = [
+                'status' => 'failed',
+                'message' => 'Failed to create brand.'
+            ];
+    
+            return response()->json($responseArr);
+        }
 
-        return response()->json($responseArr);
     }
 
     public function distributor_fetchBrandUpdateFormData(Request $request){

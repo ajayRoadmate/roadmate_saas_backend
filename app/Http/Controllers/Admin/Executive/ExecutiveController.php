@@ -133,7 +133,7 @@ class ExecutiveController extends Controller
         else{
 
             $responseArr = [
-                'status' => 'success',
+                'status' => 'failed',
                 'message' => 'Failed to get data from the server.',
                 'payload' => $data
             ];
