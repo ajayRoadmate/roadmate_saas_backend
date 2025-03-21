@@ -15,8 +15,9 @@ if (! function_exists('handleError')) {
                 'message' => $errorCodes[$errorName]['message']
             ];
 
-            if( $errorName == 'DATA_NOT_FOUND'){
-                $responseArr['payload']=[];
+            if ($errorName == 'DATA_NOT_FOUND') {
+                $responseArr['error'] = false;
+                $responseArr['payload'] = [];
             }
 
             return response()->json($responseArr);
@@ -71,7 +72,7 @@ if (! function_exists('handleFetchResponse')) {
         if ($data->isNotEmpty()) {
 
             $message = "Successfully retrieved data from server";
-           return handleSuccess($message, $data);
+            return handleSuccess($message, $data);
         } else {
 
             return handleError('DATA_NOT_FOUND');

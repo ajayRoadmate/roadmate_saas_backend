@@ -311,6 +311,12 @@ class ExecutiveController extends Controller
             ->offset($offset)
             ->limit($limit)
             ->get();
+        // ->map(function ($item) {
+        //     $item->mrp = (float) $item->mrp;
+        //     $item->purchase_price = (float) $item->purchase_price;
+        //     $item->b2b_selling_price = (float) $item->b2b_selling_price;
+        //     return $item;
+        // });
 
         $products = [];
         if ($productArr->isNotEmpty()) {
@@ -441,6 +447,10 @@ class ExecutiveController extends Controller
             ->limit($limit)
             ->orderBy('b2b_orders.id', 'DESC')
             ->get();
+        // ->map(function ($item) {
+        //     $item->total_amount = (float) $item->total_amount;
+        //     return $item;
+        // });
 
         return handlefetchResponse($orderArr);
     }
@@ -469,7 +479,7 @@ class ExecutiveController extends Controller
                 'shop_id' => $orderArr[0]->shop_id,
                 'executive_id' => $orderArr[0]->executive_id,
                 'distributor_id' => $orderArr[0]->distributor_id,
-                'total_amount' => $orderArr[0]->total_amount,
+                'total_amount' => (float)$orderArr[0]->total_amount,
                 'order_date' => $orderArr[0]->order_date,
                 'shipping_date' => $orderArr[0]->shipping_date,
                 'delivery_date' => $orderArr[0]->delivery_date,
@@ -485,8 +495,8 @@ class ExecutiveController extends Controller
                         'unit_abbreviation' => $item->unit_abbreviation,
                         'quantity' => $item->quantity,
                         'purchase_price' => $item->purchase_price,
-                        'mrp' => $item->mrp,
-                        'selling_price' => $item->selling_price,
+                        'mrp' =>  $item->mrp,
+                        'selling_price' =>  $item->selling_price,
                         'product_order_status' => $item->b2b_order_details_status,
                         'image' => Task::fetchProductImage($item->product_variant_id),
                     ];
@@ -610,6 +620,8 @@ class ExecutiveController extends Controller
                 'units.unit_name',
                 'units.unit_abbreviation',
                 'products.distributor_id',
+                'product_variants.mrp',
+                'product_variants.purchase_price',
                 'product_variants.b2b_selling_price',
                 'product_images.image'
             )
@@ -620,6 +632,11 @@ class ExecutiveController extends Controller
             ->where('product_variants.approve_status', 1)
             ->groupBy('product_variants.id')
             ->get();
+        // ->map(function ($item) {
+        //     $item->mrp = (float) $item->mrp;
+        //     $item->b2b_selling_price = (float) $item->b2b_selling_price;
+        //     return $item;
+        // });
 
         return handlefetchResponse($cartArr);
     }
@@ -891,5 +908,29 @@ class ExecutiveController extends Controller
 
             return handleError('DATA_NOT_FOUND');
         }
+    }
+
+    public function fetchShopDeliveryAddress(Request $request)
+    {
+
+        $request->validate([
+            'shop_id' => 'required|integer|exists:shops,id',
+
+        ]);
+        $shopId = $request->shop_id;
+
+        $deliveryaddressArr = DB::table('shops')
+            ->leftJoin('shop_delivery_addresses', 'shops.id', '=', 'shop_delivery_addresses.shop_id')
+            ->select(
+                'shops.id as shop_id',
+                'shops.shop_name',
+                'shops.phone_primary',
+                'shop_delivery_addresses.delivery_address',
+                'shop_delivery_addresses.pincode',
+            )
+            ->where('shops.id', $shopId)
+            ->get();
+
+        return handlefetchResponse($deliveryaddressArr);
     }
 }
