@@ -151,4 +151,11 @@ return [
     'executive_keys' => [
         'PRIMARY_KEY' => 'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJyb2FkTWF0ZSIsImlhdCI6MTcxOTIyMzQ4Mywic3ViIjoidXNlcklkIn0.jZDoOVfUtN5344337RLKCKxfhLZu9uOxt6yxkCL8a3s'
     ],
+
+
+    'aliases' => [
+        'Image' => Intervention\Image\Facades\Image::class,
+    ]
+
+
 ];
