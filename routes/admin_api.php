@@ -67,7 +67,7 @@ Route::get('admin_deleteSubscription', [SubscriptionController::class, 'admin_de
 Route::get('admin_fetchShopTableData', [ShopController::class, 'admin_fetchShopTableData']);
 Route::get('distributor_fetchShopUpdateFormData', [ShopController::class, 'distributor_fetchShopUpdateFormData']);
 Route::post('distributor_updateShop', [ShopController::class, 'distributor_updateShop']);
-Route::post('testUploadShopImage', [ShopController::class, 'testUploadShopImage']);
+Route::post('testShopFunction', [ShopController::class, 'testShopFunction']);
 
 
 //order

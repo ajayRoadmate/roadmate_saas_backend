@@ -8,38 +8,16 @@ use Illuminate\Support\Facades\DB;
 use Firebase\JWT\JWT;
 use Firebase\JWT\Key;
 
+
 class ShopController extends Controller
 {
 
-    public function testUploadShopImage(Request $request)
-    {
-        // Validate that the file is required and is an image of accepted types
-        $request->validate([
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif,svg|max:10000'
+    public function testShopFunction(Request $request){
+
+        return response()->json([
+            'status' => 'success'
         ]);
-    
-        // Check if the request has a file under 'image'
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            // Create a unique file name with timestamp
-            $imageName = time() . '.' . $image->getClientOriginalExtension();
-            // Define destination path (in the public directory)
-            $destinationPath = public_path('/img/shops');
-            
-            // Move the file to the destination path
-            $image->move($destinationPath, $imageName);
-    
-            // Optionally, you can store the file path or name in your database here
-    
-            return response()->json([
-                'success' => 'Image uploaded successfully',
-                'image'   => $imageName
-            ]);
-        } 
-    
-        return response()->json(['error' => 'No image file found.'], 400);
     }
-    
 
     public function task_uploadFiles($fileInput, $storagePath){
 
